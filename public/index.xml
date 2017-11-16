@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>A Hugo website</title>
+    <link>/</link>
+    <description>Recent content on A Hugo website</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 14 Nov 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Available Time Series</title>
+      <link>/2017/11/14/available-time-series/</link>
+      <pubDate>Tue, 14 Nov 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/11/14/available-time-series/</guid>
+      <description>  Year Number FirstSurvey LastSurvey    2010 14 2010-07-18 2010-10-17  2011 23 2011-05-08 2011-10-16  2012 23 2012-05-13 2012-10-14  2013 25 2013-05-05 2013-10-20  2014 24 2014-05-11 2014-10-19  2015 26 2015-04-26 2015-10-18  2016 25 2016-05-01 2016-10-16  2017 24 2017-04-30 2017-10-15    Plots of Respondents Total Respondents ## Warning: Removed 1 rows containing missing values (geom_point).  Self Reporting  Reporting for Others   </description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>/about/</link>
+      <pubDate>Thu, 05 May 2016 21:48:51 -0700</pubDate>
+      
+      <guid>/about/</guid>
+      <description>This is a &amp;ldquo;hello world&amp;rdquo; example website for the blogdown package. The theme was forked from @jrutheiser/hugo-lithium-theme and modified by Yihui Xie.</description>
+    </item>
+    
+  </channel>
+</rss>

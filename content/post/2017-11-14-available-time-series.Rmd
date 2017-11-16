@@ -1,0 +1,153 @@
+---
+title: Available Time Series
+author: Benjamin Moran
+date: '2017-11-14'
+slug: available-time-series
+categories:
+  - Flutracking
+tags:
+  - Flutracking
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+df <- df %>%
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents)
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+```
+
+
+```{r}
+breaks <- match(unique(df$Year), df$Year)
+labbreaks <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  labbreaks[i] = ((breaks[i+1]-breaks[i])/2) + breaks[i]
+  labbreaks[j] = ((nrow(df)-breaks[j])/2) + breaks[j]
+}
+labelsbreak <- levels(df[breaks, "Year"])
+cols <- scales::brewer_pal(palette = "Set1")(8)
+nsurv <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  nsurv[i] = breaks[i+1]-breaks[i]
+  nsurv[j] = nrow(df)-breaks[j]
+}
+firstsurv <- df[breaks, "Week_end"]
+lastsurv <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  lastsurv[i] = df[(breaks[i]+nsurv[i]-1), 1]
+  lastsurv[j] = df[nrow(df), "Week_end"]
+}
+lastsurv <- levels(droplevels(df[lastsurv,1]))
+
+sumdat <- data.frame(Year = unique(df$Year),
+                     Number = nsurv,
+                     FirstSurvey = firstsurv,
+                     LastSurvey = lastsurv)
+
+kable(sumdat)
+```
+
+
+# Plots of Respondents
+
+## Total Respondents 
+
+```{r Total}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+dfresp <- df2[df2$variable %in% c("Responses","Self_Report", "Other_Report","Clinical_Staff"),]
+dfvline <- as.data.frame(rep(levels(droplevels(unique(dfresp$variable))),length(breaks))) %>%
+  cbind(rep(breaks,each = 4))
+
+colnames(dfvline) <- c("variable","breaks")
+dfvline <- group_by(dfvline, variable)
+
+ggplot(data = dfresp,
+       aes(x = Week_end, y = value, colour = Year, group = variable)) + 
+  geom_point() +
+  geom_path() +
+  facet_grid(variable~., scales = "free") +
+  scale_colour_brewer(palette = "Set1") + 
+  geom_vline(data = dfvline, aes(xintercept = breaks, colour = "lightgrey"), linetype = 2) +
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  labs(
+    title = "Total Responses to the Flutracking Survey",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  ) 
+
+```
+
+## Self Reporting 
+
+```{r SelfReport}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+dfresp <- df2[df2$variable %in% c("Responses","Self_Report", "Other_Report"),]
+dfvline <- as.data.frame(rep(levels(droplevels(unique(dfresp$variable))),length(breaks))) %>%
+  cbind(rep(breaks,each = 3)) %>%
+  cbind(rep(cols, each = 3))
+
+colnames(dfvline) <- c("variable","breaks","cols2")
+dfvline <- group_by(dfvline, variable)
+
+ggplot(data = dfresp,
+       aes(x = Week_end, y = value, colour = Year, group = variable)) + 
+  geom_point() +
+  geom_path() +
+  facet_grid(variable~., scales = "free") +
+  scale_colour_brewer(palette = "Set1") + 
+  geom_vline(data = dfvline, aes(xintercept = breaks, colour = "lightgrey"), linetype = 2) +
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  labs(
+    title = "Total Responses to the Flutracking Survey",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  ) 
+```
+
+## Reporting for Others
+
+```{r OtherReport}
+ggplot(data = df,
+       aes(x = Week_end, y = Other_Report, colour = Year, group = Year)) + 
+  geom_point() +
+  geom_path() +
+  scale_colour_brewer(palette = "Set1") + 
+  # theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "none",
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  geom_vline(xintercept = breaks, colour = cols, linetype = 2) +
+  labs(
+    title = "Total Responses to the Flutracking Survey",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  )
+```
