@@ -15,6 +15,10 @@ opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(lubridate)
 library(reshape2)
+library(htmlTable)
+library(kableExtra)
+options(knitr.table.format = "html") 
+
 df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
 df <- df %>%
   mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
@@ -24,7 +28,7 @@ df2 <- melt(df,id = c("Week_end","fileref","Year"))
 ```
 
 
-```{r}
+```{r, fig.width=17}
 breaks <- match(unique(df$Year), df$Year)
 labbreaks <- c()
 for(i in 1:(length(breaks)-1)){
@@ -54,7 +58,9 @@ sumdat <- data.frame(Year = unique(df$Year),
                      FirstSurvey = firstsurv,
                      LastSurvey = lastsurv)
 
-kable(sumdat,  booktabs = TRUE)
+# sumdat %>%  kable("html") %>%  kable_styling(bootstrap_options = c("striped", "hover"))
+htmlTable(sumdat)
+
 ```
 
 

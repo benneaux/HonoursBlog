@@ -17,7 +17,7 @@
       <pubDate>Tue, 14 Nov 2017 00:00:00 +0000</pubDate>
       
       <guid>/2017/11/14/available-time-series/</guid>
-      <description>  Year Number FirstSurvey LastSurvey    2010 14 2010-07-18 2010-10-17  2011 23 2011-05-08 2011-10-16  2012 23 2012-05-13 2012-10-14  2013 25 2013-05-05 2013-10-20  2014 24 2014-05-11 2014-10-19  2015 26 2015-04-26 2015-10-18  2016 25 2016-05-01 2016-10-16  2017 24 2017-04-30 2017-10-15    Plots of Respondents Total Respondents ## Warning: Removed 1 rows containing missing values (geom_point).  Self Reporting  Reporting for Others   </description>
+      <description>Year Number FirstSurvey LastSurvey     1 2010 14 2010-07-18 2010-10-17   2 2011 23 2011-05-08 2011-10-16   3 2012 23 2012-05-13 2012-10-14   4 2013 25 2013-05-05 2013-10-20   5 2014 24 2014-05-11 2014-10-19   6 2015 26 2015-04-26 2015-10-18   7 2016 25 2016-05-01 2016-10-16   8 2017 24 2017-04-30 2017-10-15    Plots of Respondents Total Respondents ## Warning: Removed 1 rows containing missing values (geom_point).</description>
     </item>
     
   </channel>
