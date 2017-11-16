@@ -54,7 +54,7 @@ sumdat <- data.frame(Year = unique(df$Year),
                      FirstSurvey = firstsurv,
                      LastSurvey = lastsurv)
 
-kable(sumdat)
+kable(sumdat,  booktabs = TRUE)
 ```
 
 
