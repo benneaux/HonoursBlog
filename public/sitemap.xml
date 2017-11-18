@@ -8,8 +8,18 @@
   </url>
   
   <url>
+    <loc>/2017/11/17/chow-s-test/</loc>
+    <lastmod>2017-11-17T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/2017/11/14/available-time-series/</loc>
     <lastmod>2017-11-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2017-11-17T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -19,31 +29,25 @@
   
   <url>
     <loc>/tags/flutracking/</loc>
-    <lastmod>2017-11-14T00:00:00+00:00</lastmod>
+    <lastmod>2017-11-17T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/categories/flutracking/</loc>
-    <lastmod>2017-11-14T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/</loc>
     <lastmod>2017-11-17T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2017-11-14T00:00:00+00:00</lastmod>
+    <lastmod>2017-11-17T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/</loc>
-    <lastmod>2017-11-14T00:00:00+00:00</lastmod>
+    <lastmod>2017-11-17T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   

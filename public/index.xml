@@ -23,6 +23,16 @@
     </item>
     
     <item>
+      <title>Chow’s Test</title>
+      <link>/2017/11/17/chow-s-test/</link>
+      <pubDate>Fri, 17 Nov 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/2017/11/17/chow-s-test/</guid>
+      <description>Chow’s test Here we will be using Chow’s test to test for structural breaks in the flutracking data. Specifically, we’ll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the strucchange package in R.
+Unvaccinated Repsondents Data ## Adding missing grouping variables: `variable`   </description>
+    </item>
+    
+    <item>
       <title>Summary of available time series</title>
       <link>/2017/11/14/available-time-series/</link>
       <pubDate>Tue, 14 Nov 2017 00:00:00 +0000</pubDate>

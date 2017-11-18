@@ -5,3 +5,5 @@
 *.pdf
 *.xlsx
 public
+/public/*
+!/public/.gitkeep

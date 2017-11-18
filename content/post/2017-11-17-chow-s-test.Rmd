@@ -1,0 +1,165 @@
+---
+title: Chow’s Test
+author: Benjamin Moran
+date: '2017-11-17'
+slug: chow-s-test
+categories:
+  - Flutracking
+tags: 
+  - Flutracking
+---
+
+
+# Chow's test
+
+Here we will be using Chow's test to test for structural breaks in the flutracking data. Specifically, we'll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the `strucchange` package in `R`.
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+library(htmlTable)
+library(strucchange)
+
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+df <- df %>%
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents)
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+breaks <- match(unique(df$Year), df$Year)
+labbreaks <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  labbreaks[i] = ((breaks[i+1]-breaks[i])/2) + breaks[i]
+  labbreaks[j] = ((nrow(df)-breaks[j])/2) + breaks[j]
+}
+labelsbreak <- levels(df[breaks, "Year"])
+cols <- scales::brewer_pal(palette = "Set1")(8)
+nsurv <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  nsurv[i] = breaks[i+1]-breaks[i]
+  nsurv[j] = nrow(df)-breaks[j]
+}
+firstsurv <- df[breaks, "Week_end"]
+lastsurv <- c()
+for(i in 1:(length(breaks)-1)){
+  j = length(breaks)
+  lastsurv[i] = df[(breaks[i]+nsurv[i]-1), 1]
+  lastsurv[j] = df[nrow(df), "Week_end"]
+}
+lastsurv <- levels(droplevels(df[lastsurv,1]))
+
+sumdat <- data.frame(Year = unique(df$Year),
+                     Number = nsurv,
+                     FirstSurvey = firstsurv,
+                     LastSurvey = lastsurv)
+
+endpoints <- sumdat[,2] + breaks - 1
+endpoints[length(endpoints)] <-  nrow(df)
+endpoints <- c(breaks, endpoints)
+
+```
+
+
+## Unvaccinated Repsondents Data
+
+```{r Total}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+dfresp <- df2[df2$variable %in% c("ILI_Unvaccinated"),] %>%
+  group_by(variable) 
+dfrespvals <- dfresp[endpoints,]
+dfrespvals <- cbind(dfrespvals, breaks = endpoints,col = rep(factor(c("Start","End")),each = nrow(dfrespvals)/2))
+dfrespvals %>% select(-c(fileref, variable)) -> dfrespvals
+
+dfvline <- as.data.frame(rep(levels(droplevels(unique(dfresp$variable))),length(breaks))) %>%
+  cbind(rep(breaks,each = 4))
+
+colnames(dfvline) <- c("variable","breaks")
+dfvline <- group_by(dfvline, variable)
+
+ggplot() + 
+  geom_path(data = dfresp,
+            aes(x = Week_end,
+                y = value,
+                group = 1),
+            colour = "#1f78b4",
+            show.legend = FALSE) +
+  geom_vline(data = dfvline,
+             aes(xintercept = breaks), 
+             colour = "lightgrey", 
+             linetype = 2) +
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df2$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95,0.8),
+        legend.background = element_rect(colour = "lightgrey")) +
+      geom_point(data = dfrespvals,
+             aes(x = Week_end,
+                 y = value,
+                 group = col,
+                 colour = col)) + 
+  scale_colour_manual(name  ="Survey Period",
+                        breaks=c("Start", "End"),
+                        labels=c("Start", "End"),
+                      values = c("#33a02c","#e31a1c")) +
+  labs(
+    title = "Total Responses to the Flutracking Survey",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  ) 
+
+```
+
+
+```{r byYear}
+
+dfresp2 <- cbind(dfresp, week = rep(NA,nrow(dfresp)))
+dfresp2$week[[1]] = 1
+
+for(i in 2:nrow(dfresp2)){
+  if(dfresp2$Year[[i-1]] == dfresp2$Year[[i]]){
+    dfresp2$week[[i]] = dfresp2$week[[i-1]] + 1
+  } else {
+    dfresp2$week[[i]] = 1
+  }
+}
+
+dfresp2$week <- factor(dfresp2$week)
+ggplot() + 
+  geom_path(data = dfresp2,
+            aes(x = week,
+                y = value,
+                group = 1),
+            colour = "#1f78b4",
+            show.legend = FALSE) +
+  theme_minimal() +
+  facet_wrap(~Year, 
+             ncol = 2,
+             scales = "free_x") +
+  # scale_x_discrete(labels = labelsbreak, 
+                   # breaks = df2$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(colour = "darkgrey"),
+        axis.ticks.x = element_line(colour = "grey"),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95,0.8),
+        legend.background = element_rect(colour = "lightgrey")) +
+  labs(
+    title = "% ILI reported by Unvaccinated Respondents",
+    subtitle = "by Year and Survey Week",
+    caption = "Data from flutracking.net"
+  ) 
+
+```
