@@ -2,8 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-*.pdf
-*.xlsx
-public
+/data/files/*
 /public/*
 !/public/.gitkeep
