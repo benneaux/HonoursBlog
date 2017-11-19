@@ -17,11 +17,6 @@ tags:
 <h2>Unvaccinated Repsondents Data</h2>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotTotal-1.png" width="672" /></p>
 <p>Now I’ll use the strucchange package to test for breaks. I’ll fill out the detail of what is happening here later.</p>
-<pre class="r"><code>ILIts &lt;- ts(dfresp$value)
-lvfit &lt;- lm(ILIts ~ 1)
-plot(density(ILIts))</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-1.png" width="672" /></p>
-<pre class="r"><code>summary(lvfit)</code></pre>
 <pre><code>## 
 ## Call:
 ## lm(formula = ILIts ~ 1)
@@ -37,13 +32,7 @@ plot(density(ILIts))</code></pre>
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## Residual standard error: 0.8823 on 184 degrees of freedom</code></pre>
-<pre class="r"><code>iliwin &lt;- window(ILIts, end = 185)
-
-plot(iliwin, type = &quot;l&quot;)
-lines(ts(fitted(lvfit), start = 1, frequency = 1), col = 4)</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-2.png" width="672" /></p>
-<pre class="r"><code>bp &lt;- breakpoints(ILIts~ 1, h= 0.1)
-summary(bp)</code></pre>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-1.png" width="672" /></p>
 <pre><code>## 
 ##   Optimal (m+1)-segment partition: 
 ## 
@@ -79,13 +68,9 @@ summary(bp)</code></pre>
 ## m   0      1      2      3      4      5      6      7      8      9     
 ## RSS 143.23 113.30 105.49  95.54  88.78  85.16  81.99  81.51  81.25  81.11
 ## BIC 488.11 455.18 452.40 444.51 441.38 444.13 447.55 456.91 466.76 476.87</code></pre>
-<pre class="r"><code>plot(bp)</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-3.png" width="672" /></p>
-<pre class="r"><code>plot(iliwin)
-lines(fitted(bp, breaks = 4), col = 4)
-lines(confint(bp, breaks = 4))
-abline(v = breaks, col = &quot;green&quot;)</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-4.png" width="672" /></p>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-2.png" width="672" /></p>
+<p>So the breakpoints function suggests that there are 4 (min. BIC).</p>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/scplot2-1.png" width="672" /></p>
 <p>Here is the same data faceted by Year.</p>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotByYear-1.png" width="672" /></p>
 </div>
