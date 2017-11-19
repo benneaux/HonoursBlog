@@ -11,13 +11,81 @@ tags:
 
 
 
-<div id="chows-test" class="section level1">
-<h1>Chow’s test</h1>
-<p>Here we will be using Chow’s test to test for structural breaks in the flutracking data. Specifically, we’ll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the <code>strucchange</code> package in <code>R</code>.</p>
+<p>One of the goals of my project is to try and identify changes in the structure of the various flutracking time series (initially the % of unvaccinated respondents reporting ILI symptoms). There are two reasons for this that inspire two separate lines of inquiry: does the structure change from year to year; and does the structure change within each year?</p>
+<p>Here we will be using Chow’s test to test for structural breaks in the flutracking data. Specifically, we’ll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the <code>strucchange</code> package in <code>R</code>. Firstly, let’s plot the %ILI Unvaccinated time series.</p>
 <div id="unvaccinated-repsondents-data" class="section level2">
 <h2>Unvaccinated Repsondents Data</h2>
-<pre><code>## Adding missing grouping variables: `variable`</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/Total-1.png" width="672" /></p>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/byYear-1.png" width="672" /></p>
-</div>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotTotal-1.png" width="672" /></p>
+<p>Now I’ll use the strucchange package to test for breaks. I’ll fill out the detail of what is happening here later.</p>
+<pre class="r"><code>ILIts &lt;- ts(dfresp$value)
+lvfit &lt;- lm(ILIts ~ 1)
+plot(density(ILIts))</code></pre>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-1.png" width="672" /></p>
+<pre class="r"><code>summary(lvfit)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ILIts ~ 1)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.90054 -0.70054 -0.00054  0.59946  1.99946 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  3.00054    0.06487   46.26   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.8823 on 184 degrees of freedom</code></pre>
+<pre class="r"><code>iliwin &lt;- window(ILIts, end = 185)
+
+plot(iliwin, type = &quot;l&quot;)
+lines(ts(fitted(lvfit), start = 1, frequency = 1), col = 4)</code></pre>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-2.png" width="672" /></p>
+<pre class="r"><code>bp &lt;- breakpoints(ILIts~ 1, h= 0.1)
+summary(bp)</code></pre>
+<pre><code>## 
+##   Optimal (m+1)-segment partition: 
+## 
+## Call:
+## breakpoints.formula(formula = ILIts ~ 1, h = 0.1)
+## 
+## Breakpoints at observation number:
+##                                       
+## m = 1                      131        
+## m = 2         53           132        
+## m = 3         55    87     131        
+## m = 4      37 55    87     131        
+## m = 5      37 55 73    113 131        
+## m = 6      37 55 73    113 131     167
+## m = 7      37 55 73 91 113 131     167
+## m = 8   19 37 55 73 91 113 131     167
+## m = 9   19 37 55 73 91 113 131 149 167
+## 
+## Corresponding to breakdates:
+##                                       
+## m = 1                      131        
+## m = 2         53           132        
+## m = 3         55    87     131        
+## m = 4      37 55    87     131        
+## m = 5      37 55 73    113 131        
+## m = 6      37 55 73    113 131     167
+## m = 7      37 55 73 91 113 131     167
+## m = 8   19 37 55 73 91 113 131     167
+## m = 9   19 37 55 73 91 113 131 149 167
+## 
+## Fit:
+##                                                                          
+## m   0      1      2      3      4      5      6      7      8      9     
+## RSS 143.23 113.30 105.49  95.54  88.78  85.16  81.99  81.51  81.25  81.11
+## BIC 488.11 455.18 452.40 444.51 441.38 444.13 447.55 456.91 466.76 476.87</code></pre>
+<pre class="r"><code>plot(bp)</code></pre>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-3.png" width="672" /></p>
+<pre class="r"><code>plot(iliwin)
+lines(fitted(bp, breaks = 4), col = 4)
+lines(confint(bp, breaks = 4))
+abline(v = breaks, col = &quot;green&quot;)</code></pre>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-4.png" width="672" /></p>
+<p>Here is the same data faceted by Year.</p>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotByYear-1.png" width="672" /></p>
 </div>
