@@ -123,17 +123,50 @@ ggplot() +
 
 ```
 
-Now I'll use the strucchange package to test for breaks. I'll fill out the detail of what is happening here later.
+Now I'll use the strucchange package to test for breaks. To test for breaks we fit a basic linear model: `lm(ILIts ~ 1)` where `ILIts` is the time series plotted abouve.
 
 ```{r strucchangeByYear}
 ILIts <- ts(dfresp$value)
 lvfit <- lm(ILIts ~ 1)
 summary(lvfit)
 
-iliwin <- window(ILIts, end = 185)
+ggplot() + 
+  geom_path(data = dfresp,
+            aes(x = Week_end,
+                y = value,
+                group = 1),
+            colour = "#1f78b4",
+            show.legend = FALSE) +
+  geom_vline(data = dfvline,
+             aes(xintercept = breaks), 
+             colour = "lightgrey", 
+             linetype = 2) +
+  geom_hline(yintercept = lvfit$coefficients[1]) +
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df2$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95,0.8),
+        legend.background = element_rect(colour = "lightgrey")) +
+      geom_point(data = dfrespvals,
+                 aes(x = Week_end,
+                     y = value,
+                     group = col,
+                     colour = col)) + 
+  scale_colour_manual(name  ="Survey Period",
+                      breaks=c("Start", "End"),
+                      labels=c("Start", "End"),
+                      values = c("#33a02c","#e31a1c")) +
+  labs(
+    title = "Total Responses to the Flutracking Survey",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  ) 
 
-plot(iliwin, type = "l")
-lines(ts(fitted(lvfit), start = 1, frequency = 1), col = 4)
 
 bp <- breakpoints(ILIts~ 1, h= 0.1)
 summary(bp)
@@ -142,32 +175,82 @@ plot(bp)
 
 So the breakpoints function suggests that there are 4 (min. BIC). 
 
-```{r scplot2}
-plot(iliwin, 
-     main = "%ILI w/ fit and breaks",
-     xaxt = "n",
-     xlab = NA,
-     ylab = "%ILI",
-     ylim = c(1,6),
-     lwd = 2)
-axis(side = 1, 
-     at = labbreaks, 
-     labels = labelsbreak,
-     tck=-.02)
-abline(v = breaks, col = "lightgrey", lty = 2)
-lines(confint(bp, breaks = 4))
-lines(fitted(bp, breaks = 4), col = 4, lwd = 1.5)
 
-legend("topright", 
-       inset=c(.005,.01), 
-       cex = 0.7,
-       ncol = 1,
-       title="Legend", 
-       c("%ILI","Fit","Breaks","Conf.Int","Years"), 
-       horiz=FALSE, 
-       lty=c(1,1,2,1,2), 
-       lwd=c(2,1.5,1,1,1), 
-       col=c("black","blue","black","red","lightgrey"))
+```{r scplot2}
+
+# iliwin <- window(ILIts, end = 185)
+# 
+# plot(iliwin, 
+#      main = "%ILI w/ fit and breaks",
+#      xaxt = "n",
+#      xlab = NA,
+#      ylab = "%ILI",
+#      ylim = c(1,6),
+#      lwd = 2)
+# axis(side = 1, 
+#      at = labbreaks, 
+#      labels = labelsbreak,
+#      tck=-.02)
+# abline(v = breaks, col = "lightgrey", lty = 1)
+# lines(confint(bp, breaks = 4))
+# lines(fitted(bp, breaks = 4), col = 4, lwd = 1.5)
+# 
+# legend("topright", 
+#        inset=c(.005,.01), 
+#        cex = 0.7,
+#        ncol = 1,
+#        title="Legend", 
+#        c("%ILI","Fit","Breaks","Conf.Int"), 
+#        horiz=FALSE, 
+#        lty=c(1,1,2,1), 
+#        lwd=c(2,1.5,1,1), 
+#        col=c("black","blue","black","red"))
+
+bpfit <- data.frame(x = seq(1,185),values = c(fitted(bp, breaks = 4)))
+bpconfint <- data.frame(confint(bp, breaks = 4)$confint,breaks = seq(1,4))
+dfresp <- cbind(dfresp, week = seq(1,185))
+
+ggplot() + 
+  geom_path(data = dfresp,
+            aes(x = week,
+                y = value,
+                group = 1),
+            colour = "#1f78b4",
+            show.legend = FALSE) +
+  geom_vline(data = dfvline,
+             aes(xintercept = breaks), 
+             colour = "lightgrey", 
+             linetype = 2) +
+  geom_line(data = bpfit, aes(x= x, y = values)) +
+  geom_segment(data = bpconfint, aes(x = X2.5.., xend = X97.5.., y = 1, yend = 1)) +
+  geom_segment(data = bpconfint, aes(x = X2.5.., xend = X2.5.., y = 0.95, yend = 1.05)) +
+  geom_segment(data = bpconfint, aes(x = X97.5.., xend = X97.5.., y = 0.95, yend = 1.05)) +
+  geom_vline(data = bpconfint, aes(xintercept = breakpoints), lty = 2) +
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df2$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        legend.justification=c(1,0), 
+        legend.position=c(0.95,0.8),
+        legend.background = element_rect(colour = "lightgrey")) +
+      geom_point(data = dfrespvals,
+                 aes(x = breaks,
+                     y = value,
+                     group = col,
+                     colour = col)) + 
+  scale_colour_manual(name  ="Survey Period",
+                      breaks=c("Start", "End"),
+                      labels=c("Start", "End"),
+                      values = c("#33a02c","#e31a1c")) +
+  labs(
+    title = "%ILI Reported by Unvaccinated Respondents",
+    subtitle = "by Year and survey week",
+    caption = "Data from flutracking.net"
+  ) 
+
 ```
 
 Here is the same data faceted by Year.
@@ -186,6 +269,7 @@ for(i in 2:nrow(dfresp2)){
 
 dfresp2$week <- factor(dfresp2$week)
 ```
+
 
 ```{r plotByYear}
 ggplot() + 
