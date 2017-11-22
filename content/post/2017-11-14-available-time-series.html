@@ -11,7 +11,7 @@ slug: available-time-series
 
 
 
-<p>A brief summary of all of the available datasets within the publically available Flutracking reports. The data itself will be accessible on another page. This is still just a test.</p>
+<p>The data ranges from 2010 - 2017 but it is not an unbroken time series. The survey runs for about six months each year - usually beginning in May and ending in October - however the earlier years tend to have fewer surveys and each year does not span the same date range. The table below is a brief summary of this information.</p>
 <div id="summary-data" class="section level1">
 <h1>Summary Data</h1>
 <table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
@@ -84,22 +84,42 @@ slug: available-time-series
 </tbody>
 </table>
 </div>
-<div id="plots-of-respondents" class="section level1">
-<h1>Plots of Respondents</h1>
+<div id="plots-of-respondent-data" class="section level1">
+<h1>Plots of Respondent Data</h1>
+<p>Here you can find a number of explanatory plots of the different time series available in the full data set.</p>
 <div id="total-respondents" class="section level2">
 <h2>Total Respondents</h2>
+<p>Below is plot of the total number of respondents to the Flutracking survey for each week.</p>
 <p><img src="/post/2017-11-14-available-time-series_files/figure-html/Total-1.png" width="672" /></p>
 </div>
 <div id="types-of-responses" class="section level2">
 <h2>Types of Responses</h2>
+<p>Survey participants can respond both for themselves (<em>Self</em>) and for other (<em>Other</em>) members of their household. The below plot breaks the total response data down into these groups.</p>
 <p><img src="/post/2017-11-14-available-time-series_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 </div>
-<div id="self-reporting" class="section level2">
-<h2>Self Reporting</h2>
+<div id="vaccination-status" class="section level2">
+<h2>Vaccination Status</h2>
+<p>Here the data is broken down into whether or not the subject of the survey (i.e. both self reports and others) has received the annual influenza vaccination. Note the spikes at the beginning of each year in the number of unvaccinated respondents due to the survey period beginning before some people have the chance to receive the vaccination.</p>
+<pre><code>## Warning: Removed 2 rows containing missing values (geom_path).</code></pre>
 <p><img src="/post/2017-11-14-available-time-series_files/figure-html/SelfReport-1.png" width="672" /></p>
 </div>
-<div id="reporting-for-others" class="section level2">
-<h2>Reporting for Others</h2>
-<p><img src="/post/2017-11-14-available-time-series_files/figure-html/OtherReport-1.png" width="672" /></p>
+<div id="clinical-staff" class="section level2">
+<h2>Clinical Staff</h2>
+<pre><code>## Warning: Removed 3 rows containing missing values (geom_path).</code></pre>
+<pre><code>## Warning: Removed 3 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2017-11-14-available-time-series_files/figure-html/ClinicalStaff-1.png" width="672" /></p>
+</div>
+</div>
+<div id="plots-of-influenza-like-illness-symptoms-data" class="section level1">
+<h1>Plots of Influenza-like-illness Symptoms Data</h1>
+<div id="ili-reported" class="section level2">
+<h2>% ILI Reported</h2>
+<p><img src="/post/2017-11-14-available-time-series_files/figure-html/ILIReported-1.png" width="672" /></p>
+</div>
+<div id="ili-reported-with-absence" class="section level2">
+<h2>% ILI Reported with Absence</h2>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_path).</code></pre>
+<pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2017-11-14-available-time-series_files/figure-html/ILIReportedwAbsence-1.png" width="672" /></p>
 </div>
 </div>
