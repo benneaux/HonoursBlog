@@ -25,7 +25,8 @@ library(strucchange)
 ```
 
 ```{r data, include = FALSE}
-df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+# df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+df <- readRDS("../../data/fludata.RDS") # work location
 df <- df %>%
   mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
   mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents)
@@ -62,7 +63,7 @@ sumdat <- data.frame(Year = unique(df$Year),
 
 endpoints <- sumdat[,2] + breaks - 1
 endpoints[length(endpoints)] <-  nrow(df)
-endpoints <- c(breaks, endpoints)
+endpoints <- data.frame(breaks = c(breaks, endpoints))
 
 ```
 
@@ -71,14 +72,20 @@ endpoints <- c(breaks, endpoints)
 
 ```{r dataTotal, include=FALSE}
 cols <- scales::brewer_pal(palette = "Set1")(8)
+
 dfresp <- df2[df2$variable %in% c("ILI_Unvaccinated"),] %>%
   group_by(variable) 
-dfrespvals <- dfresp[endpoints,]
-dfrespvals <- cbind(dfrespvals, breaks = endpoints,col = rep(factor(c("Start","End")),each = nrow(dfrespvals)/2))
-dfrespvals %>% select(-c(fileref, variable)) -> dfrespvals
+endpoints <- sumdat[,2] + breaks - 1
+endpoints[length(endpoints)] <-  nrow(df)
+endpoints <- c(breaks, endpoints)
+dfrespvals <- dfresp[c(endpoints),]
+dfrespvals <- dfrespvals %>%
+   mutate(col = rep(factor(c("Start","End")),each = nrow(dfrespvals)/2)) %>%
+  mutate(breaks = endpoints)
+# dfrespvals %>% select(-c(fileref, variable)) -> dfrespvals
 
 dfvline <- as.data.frame(rep(levels(droplevels(unique(dfresp$variable))),length(breaks))) %>%
-  cbind(rep(breaks,each = 4))
+  cbind(rep(breaks,each = 1))
 
 colnames(dfvline) <- c("variable","breaks")
 dfvline <- group_by(dfvline, variable)
@@ -208,7 +215,8 @@ So the breakpoints function suggests that there are 4 (min. BIC).
 
 bpfit <- data.frame(x = seq(1,185),values = c(fitted(bp, breaks = 4)))
 bpconfint <- data.frame(confint(bp, breaks = 4)$confint,breaks = seq(1,4))
-dfresp <- cbind(dfresp, week = seq(1,185))
+dfresp <- dfresp %>%
+  mutate(week = seq(1,185))
 
 ggplot() + 
   geom_path(data = dfresp,
@@ -256,7 +264,8 @@ ggplot() +
 Here is the same data faceted by Year.
 
 ```{r dataByYear, include=FALSE}
-dfresp2 <- cbind(dfresp, week = rep(NA,nrow(dfresp)))
+dfresp2 <- dfresp %>%
+  mutate(week = rep(NA,nrow(dfresp)))
 dfresp2$week[[1]] = 1
 
 for(i in 2:nrow(dfresp2)){
