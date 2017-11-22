@@ -25,8 +25,8 @@ library(strucchange)
 ```
 
 ```{r data, include = FALSE}
-# df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
-df <- readRDS("../../data/fludata.RDS") # work location
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+#df <- readRDS("../../data/fludata.RDS") # work location
 df <- df %>%
   mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
   mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents)

@@ -4,4 +4,6 @@
 .Ruserdata
 /data/files/*
 /public/*
+public/*
 !/public/.gitkeep
+public
