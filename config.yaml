@@ -1,2 +1,2 @@
-[params]
-    summaryLength = 10
+params:
+  summaryLength: 10
