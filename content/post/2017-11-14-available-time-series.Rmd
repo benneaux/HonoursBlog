@@ -18,15 +18,17 @@ library(reshape2)
 library(htmlTable)
 
 df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
-df <- df %>%
+# df <- readRDS("../../data/fludata.RDS") # work location
+df %>%
   mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
-  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents)
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents) %>%
+  mutate(Clinical_Staff_Unvaccinated = .$Clinical_Staff-.$Clinical_Staff_Vaccinated) -> df
 
 df2 <- melt(df,id = c("Week_end","fileref","Year"))
 ```
 
 
-A brief summary of all of the available datasets within the publically available Flutracking reports. The data itself will be accessible on another page. This is still just a test.
+The data ranges from 2010 - 2017 but it is not an unbroken time series. The survey runs for about six months each year - usually beginning in May and ending in October - however the earlier years tend to have fewer surveys and each year does not span the same date range. The table below is a brief summary of this information.
 
 # Summary Data
 
@@ -46,14 +48,14 @@ for(i in 1:(length(breaks)-1)){
   nsurv[i] = breaks[i+1]-breaks[i]
   nsurv[j] = nrow(df)-breaks[j]
 }
-firstsurv <- df[breaks, "Week_end"]
+firstsurv <- droplevels(df[breaks, "Week_end"])
 lastsurv <- c()
 for(i in 1:(length(breaks)-1)){
   j = length(breaks)
   lastsurv[i] = df[(breaks[i]+nsurv[i]-1), 1]
   lastsurv[j] = df[nrow(df), "Week_end"]
 }
-lastsurv <- levels(droplevels(df[lastsurv,1]))
+lastsurv <- factor(df[lastsurv,1])
 
 sumdat <- data.frame(Year = unique(df$Year),
                      Number = nsurv,
@@ -65,9 +67,13 @@ htmlTable(sumdat)
 ```
 
 
-# Plots of Respondents
+# Plots of Respondent Data
+
+Here you can find a number of explanatory plots of the different time series available in the full data set.
 
 ## Total Respondents 
+
+Below is plot of the total number of respondents to the Flutracking survey for each week. 
 
 ```{r Total}
 cols <- scales::brewer_pal(palette = "Set1")(8)
@@ -102,6 +108,8 @@ ggplot(data = dfresp,
 
 ## Types of Responses
 
+Survey participants can respond both for themselves (_Self_) and for other (_Other_) members of their household. The below plot breaks the total response data down into these groups.
+
 ```{r}
 cols <- scales::brewer_pal(palette = "Set1")(8)
 dfresp <- df2[df2$variable %in% c("Self_Report", "Other_Report"),]
@@ -130,9 +138,9 @@ ggplot(data = dfresp,
                  group = interaction(Year, variable),
                  colour = variable),
              show.legend = FALSE) + 
-  scale_colour_discrete(name="Reponse Type",
+  scale_colour_discrete(name="Report Type",
                       breaks=c("Self_Report", "Other_Report"),
-                         labels=c("Self Reported", "Other")) +
+                         labels=c("Self", "Other")) +
 
   theme_minimal() +
   scale_x_discrete(labels = labelsbreak, 
@@ -144,67 +152,218 @@ ggplot(data = dfresp,
         axis.title.x = element_blank()) +
   labs(
     title = "Total Responses to the Flutracking Survey",
-    subtitle = "by Response Type",
+    subtitle = "by Report Type",
     caption = "Data from flutracking.net"
   ) 
 
 ```
 
 
-## Self Reporting 
+## Vaccination Status
+
+Here the data is broken down into whether or not the subject of the survey (i.e. both self reports and others) has received the annual influenza vaccination. Note the spikes at the beginning of each year in the number of unvaccinated respondents due to the survey period beginning before some people have the chance to receive the vaccination. 
 
 ```{r SelfReport}
 cols <- scales::brewer_pal(palette = "Set1")(8)
-dfresp <- df2[df2$variable %in% c("Responses","Self_Report", "Other_Report"),]
-dfvline <- as.data.frame(rep(levels(droplevels(unique(dfresp$variable))),length(breaks))) %>%
-  cbind(rep(breaks,each = 3)) %>%
-  cbind(rep(cols, each = 3))
+subgroups <- c("Vaccinated_Respondents","Unvaccinated")
+dfresp <- df2[df2$variable %in% subgroups,]
+endpoints <- sumdat[,2] + breaks - 1
+endpoints[length(endpoints)] <-  nrow(df)
+endpoints <- c(breaks, endpoints)
+endpoints[6] <- endpoints[6] + 1
+dfrespvals <- dfresp[c(endpoints,(endpoints + nrow(dfresp)/2)),]
+dfrespvals <- cbind(dfrespvals, rep(breaks,2))
 
-colnames(dfvline) <- c("variable","breaks","cols2")
+dfvline <- as.data.frame(rep(unique(dfresp$variable),2)) %>%
+  cbind(breaks = rep(breaks,each = length(subgroups)))
+
+colnames(dfvline) <- c("variable","breaks")
 dfvline <- group_by(dfvline, variable)
 
 ggplot(data = dfresp,
-       aes(x = Week_end, y = value, colour = Year, group = variable)) + 
-  geom_point() +
-  geom_path() +
-  facet_grid(variable~., scales = "free") +
-  scale_colour_brewer(palette = "Set1") + 
-  geom_vline(data = dfvline, aes(xintercept = breaks, colour = "lightgrey"), linetype = 2) +
+       aes(x = Week_end, y = value, group = interaction(Year, variable))) + 
+    geom_vline(data = dfvline, aes(xintercept = breaks),
+             colour = "lightgrey",
+             linetype = 2,
+             show.legend = FALSE) +
+  geom_path(aes(colour = variable)) +
+  geom_point(data = dfrespvals,
+             aes(x = Week_end,
+                 y = value,
+                 group = interaction(Year, variable),
+                 colour = variable),
+             show.legend = FALSE) + 
+  scale_colour_discrete(name="Vaccination Status",
+                      breaks=c("Vaccinated_Respondents", "Unvaccinated"),
+                         labels=c("Vaccinated", "Unvaccinated")) +
+
   theme_minimal() +
   scale_x_discrete(labels = labelsbreak, 
                    breaks = df$Week_end[labbreaks]) +
   theme(panel.grid.major.x = element_blank(),
-        legend.position = "none",
+        legend.position = "bottom",
         panel.grid.minor.y = element_blank(),
         axis.title.y = element_blank(),
         axis.title.x = element_blank()) +
   labs(
     title = "Total Responses to the Flutracking Survey",
-    subtitle = "by Year and survey week",
-    caption = "Data from flutracking.net"
-  ) 
+    subtitle = "by Vaccination Status",
+    caption = "Data from flutracking.net\nNote: Vaccination data unnavailable for the first survey week of 2015 due to system error"
+  )  
 ```
 
-## Reporting for Others
+## Clinical Staff
 
-```{r OtherReport}
-ggplot(data = df,
-       aes(x = Week_end, y = Other_Report, colour = Year, group = Year)) + 
-  geom_point() +
-  geom_path() +
-  scale_colour_brewer(palette = "Set1") + 
-  # theme_minimal() +
+```{r ClinicalStaff}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+subgroups <- c("Clinical_Staff","Clinical_Staff_Vaccinated","Clinical_Staff_Unvaccinated")
+dfresp <- df2[df2$variable %in% subgroups,]
+# endpoints <- sumdat[,2] + breaks - 1
+# endpoints[length(endpoints)] <-  nrow(df)
+# endpoints <- c(breaks, endpoints)
+# endpoints[6] <- endpoints[6] + 1
+dfrespvals <- dfresp[dfresp$Week_end %in% firstsurv | dfresp$Week_end %in% lastsurv,]
+
+dfvline <- as.data.frame(rep(unique(dfresp$variable),2)) %>%
+  cbind(breaks = rep(breaks,each = length(subgroups)))
+
+colnames(dfvline) <- c("variable","breaks")
+dfvline <- group_by(dfvline, variable)
+
+
+ggplot(data = dfresp,
+       aes(x = Week_end, y = value, group = interaction(Year, variable))) + 
+    geom_vline(data = dfvline, aes(xintercept = breaks),
+             colour = "lightgrey",
+             linetype = 2,
+             show.legend = FALSE) +
+  geom_path(aes(colour = variable)) +
+  geom_point(data = dfrespvals,
+             aes(x = Week_end,
+                 y = value,
+                 group = interaction(Year, variable),
+                 colour = variable),
+             show.legend = FALSE) + 
+  scale_colour_discrete(name="Vaccination Status",
+                      breaks=c("Clinical_Staff","Clinical_Staff_Vaccinated","Clinical_Staff_Unvaccinated"),
+                         labels=c("Total","Vaccinated", "Unvaccinated")) +
+
+  theme_minimal() +
   scale_x_discrete(labels = labelsbreak, 
                    breaks = df$Week_end[labbreaks]) +
   theme(panel.grid.major.x = element_blank(),
-        legend.position = "none",
+        legend.position = "bottom",
         panel.grid.minor.y = element_blank(),
         axis.title.y = element_blank(),
         axis.title.x = element_blank()) +
-  geom_vline(xintercept = breaks, colour = cols, linetype = 2) +
   labs(
-    title = "Total Responses to the Flutracking Survey",
-    subtitle = "by Year and survey week",
+    title = "Total Responses to the Flutracking Survey - Clinical Staff",
+    subtitle = "by Vaccination Status",
+    caption = "Data from flutracking.net\nNote: Vaccination data unnavailable for the first survey week of 2015 due to system error"
+  )  
+```
+
+
+# Plots of Influenza-like-illness Symptoms Data
+
+## % ILI Reported
+
+```{r ILIReported}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+subgroups <- c("ILI_Vaccinated","ILI_Unvaccinated")
+dfresp <- df2[df2$variable %in% subgroups,]
+# endpoints <- sumdat[,2] + breaks - 1
+# endpoints[length(endpoints)] <-  nrow(df)
+# endpoints <- c(breaks, endpoints)
+# endpoints[6] <- endpoints[6] + 1
+dfrespvals <- dfresp[dfresp$Week_end %in% firstsurv | dfresp$Week_end %in% lastsurv,]
+
+dfvline <- as.data.frame(rep(unique(dfresp$variable),2)) %>%
+  cbind(breaks = rep(breaks,each = length(subgroups)))
+
+colnames(dfvline) <- c("variable","breaks")
+dfvline <- group_by(dfvline, variable)
+
+
+ggplot(data = dfresp,
+       aes(x = Week_end, y = value, group = interaction(Year, variable))) + 
+    geom_vline(data = dfvline, aes(xintercept = breaks),
+             colour = "lightgrey",
+             linetype = 2,
+             show.legend = FALSE) +
+  geom_path(aes(colour = variable)) +
+  geom_point(data = dfrespvals,
+             aes(x = Week_end,
+                 y = value,
+                 group = interaction(Year, variable),
+                 colour = variable),
+             show.legend = FALSE) + 
+  scale_colour_discrete(name="Vaccination Status",
+                      breaks=c("ILI_Vaccinated","ILI_Unvaccinated"),
+                         labels=c("Vaccinated", "Unvaccinated")) +
+
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "bottom",
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  labs(
+    title = "% Influenza-like-illness Symptoms reported",
+    subtitle = "by Vaccination Status",
     caption = "Data from flutracking.net"
-  )
+  )  
+```
+
+## % ILI Reported with Absence
+
+```{r ILIReportedwAbsence}
+cols <- scales::brewer_pal(palette = "Set1")(8)
+subgroups <- c("ILI_wAbsence_Vaccinated","ILI_wAbsence_Unvaccinated")
+dfresp <- df2[df2$variable %in% subgroups,]
+# endpoints <- sumdat[,2] + breaks - 1
+# endpoints[length(endpoints)] <-  nrow(df)
+# endpoints <- c(breaks, endpoints)
+# endpoints[6] <- endpoints[6] + 1
+dfrespvals <- dfresp[dfresp$Week_end %in% firstsurv | dfresp$Week_end %in% lastsurv,]
+
+dfvline <- as.data.frame(rep(unique(dfresp$variable),2)) %>%
+  cbind(breaks = rep(breaks,each = length(subgroups)))
+
+colnames(dfvline) <- c("variable","breaks")
+dfvline <- group_by(dfvline, variable)
+
+
+ggplot(data = dfresp,
+       aes(x = Week_end, y = value, group = interaction(Year, variable))) + 
+    geom_vline(data = dfvline, aes(xintercept = breaks),
+             colour = "lightgrey",
+             linetype = 2,
+             show.legend = FALSE) +
+  geom_path(aes(colour = variable)) +
+  geom_point(data = dfrespvals,
+             aes(x = Week_end,
+                 y = value,
+                 group = interaction(Year, variable),
+                 colour = variable),
+             show.legend = FALSE) + 
+  scale_colour_discrete(name="Vaccination Status",
+                      breaks=c("ILI_wAbsence_Vaccinated","ILI_wAbsence_Unvaccinated"),
+                         labels=c("Vaccinated", "Unvaccinated")) +
+
+  theme_minimal() +
+  scale_x_discrete(labels = labelsbreak, 
+                   breaks = df$Week_end[labbreaks]) +
+  theme(panel.grid.major.x = element_blank(),
+        legend.position = "bottom",
+        panel.grid.minor.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank()) +
+  labs(
+    title = "% Influenza-like-illness Symptoms reported with an Absence from Work",
+    subtitle = "by Vaccination Status",
+    caption = "Data from flutracking.net"
+  )  
 ```
