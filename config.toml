@@ -4,7 +4,7 @@ title = "My Honours Blog"
 theme = "hugo-theme-docdock"
 googleAnalytics = ""
 disqusShortname = ""
-ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$"]
 
 
 [permalinks]
