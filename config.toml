@@ -31,7 +31,8 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$"]
 
     MathJaxCDN = "//cdn.bootcss.com"
     MathJaxVersion = "2.7.1"
-
+    # the length of text to show in a .Summary
+    summaryLength =              10
     [params.logo]
     url = "logo.png"
     width = 50
