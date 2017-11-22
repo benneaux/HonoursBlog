@@ -1,9 +1,13 @@
 ---
 title: "References"
 description: ""
-weight:  1
+weight:  2
 alwaysopen: true
 ---
+
+Here I'll list all of the papers and other documents I plan to reference in my final project. I'll also list any that I've read for background on certain topics but aren't directly relevant.
+
+## Papers
 
 * De Jong, P., and Penzer, J. (1998). Diagnosing Shocks in Time Series. Journal of the American Statistical Association 93:796806.
 [pdf](/reference/2670129.pdf)
