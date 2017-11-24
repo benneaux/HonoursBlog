@@ -1,0 +1,77 @@
+---
+title: Recreating De Jong & Penzer
+author: Benjamin G. Moran
+date: '2017-11-24'
+slug: recreating-de-jong-penzer
+categories:
+  - Modelling
+tags:
+  - Flutracking
+---
+
+In their paper _Diagnosing Shocks in Time Series_ De Jong and Penzer produce graphs of their $\tau^2$ statistic for the measurement and level shocks in the Nile (Cobb 1978) data (figure 3). Using the `MARSS` package in `R` I have been able to recreate the __Measurement__ and __Level__ shock statistics perfectly (I think).
+
+Firstly, the model.
+
+### MARSS Model for Nile Data
+
+```{r}
+library(MARSS)
+dat = t(as.matrix(Nile))
+
+# The model below produces the same results - and matches the example in MARSS package
+# but I've made the values explicit to aid comprehension.
+
+# mod.nile.2 = list(Z=matrix(1),  
+#                   A=matrix(0),
+#                   R=matrix("r"),
+#                   B=matrix(1),
+#                   U=matrix(0),
+#                   Q=matrix("q"),
+#                   x0=matrix("pi"))
+
+mod.nile.2 = list(Z=matrix(1), 
+                  A=matrix(0),
+                  R=matrix(15099),
+                  B=matrix(1),
+                  U=matrix(0),
+                  Q=matrix(1469),
+                  x0=matrix(1120))
+kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits
+
+kem.2 = MARSS(dat, model=mod.nile.2,inits=kem.2em$par, method="BFGS") # model
+
+resids.2a = residuals(kem.2) # store the residuals separately
+```
+
+
+### Recreating the Graphs
+
+Now, here are their graphs:
+
+![](/Images/DJP/DJP_Figure3.jpeg)
+
+and here are mine
+
+#### Measurement Shocks -> Standardised Residuals [1,] (Squared)
+
+```{r, echo = FALSE}
+library(ggplot2)
+
+df <- data.frame(Year = seq(1871,1970,1), resids = abs(residuals(kem.2)$std.residuals)[1,]^2)
+ggplot(data = df, aes(y = resids, x = Year)) +
+  geom_path() +
+  theme_linedraw()
+
+```
+
+#### Level Shocks -> Standard Residuals [2,] (Squared)
+
+```{r, echo = FALSE}
+df <- data.frame(Year = seq(1871,1970,1), resids = abs(residuals(kem.2)$std.residuals)[2,]^2)
+ggplot(data = df, aes(y = resids, x = Year)) +
+  geom_path() +
+  theme_linedraw()
+```
+
+Alhough it may be hard to judge the scaling, these are the same as far as I can tell without having access to their data.

@@ -1,0 +1,70 @@
+---
+title: Recreating De Jong & Penzer
+author: Benjamin G. Moran
+date: '2017-11-24'
+slug: recreating-de-jong-penzer
+categories:
+  - Modelling
+tags:
+  - Flutracking
+---
+
+
+
+<p>In their paper <em>Diagnosing Shocks in Time Series</em> De Jong and Penzer produce graphs of their <span class="math inline">\(\tau^2\)</span> statistic for the measurement and level shocks in the Nile (Cobb 1978) data (figure 3). Using the <code>MARSS</code> package in <code>R</code> I have been able to recreate the <strong>Measurement</strong> and <strong>Level</strong> shock statistics perfectly (I think).</p>
+<p>Firstly, the model.</p>
+<div id="marss-model-for-nile-data" class="section level3">
+<h3>MARSS Model for Nile Data</h3>
+<pre class="r"><code>library(MARSS)
+dat = t(as.matrix(Nile))
+
+# The model below produces the same results - and matches the example in MARSS package
+# but I&#39;ve made the values explicit to aid comprehension.
+
+# mod.nile.2 = list(Z=matrix(1),  
+#                   A=matrix(0),
+#                   R=matrix(&quot;r&quot;),
+#                   B=matrix(1),
+#                   U=matrix(0),
+#                   Q=matrix(&quot;q&quot;),
+#                   x0=matrix(&quot;pi&quot;))
+
+mod.nile.2 = list(Z=matrix(1), 
+                  A=matrix(0),
+                  R=matrix(15099),
+                  B=matrix(1),
+                  U=matrix(0),
+                  Q=matrix(1469),
+                  x0=matrix(1120))
+kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits</code></pre>
+<pre><code>## 
+## All parameters were fixed so none estimated.
+## Expected value of the states conditioned on the model are in fit$states.
+## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
+## Log-likelihood: -637.7772</code></pre>
+<pre class="r"><code>kem.2 = MARSS(dat, model=mod.nile.2,inits=kem.2em$par, method=&quot;BFGS&quot;) # model</code></pre>
+<pre><code>## 
+## All parameters were fixed so none estimated.
+## Expected value of the states conditioned on the model are in fit$states.
+## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
+## Log-likelihood: -637.7772</code></pre>
+<pre class="r"><code>resids.2a = residuals(kem.2) # store the residuals separately</code></pre>
+</div>
+<div id="recreating-the-graphs" class="section level3">
+<h3>Recreating the Graphs</h3>
+<p>Now, here are their graphs:</p>
+<div class="figure">
+<img src="/Images/DJP/DJP_Figure3.jpeg" />
+
+</div>
+<p>and here are mine</p>
+<div id="measurement-shocks---standardised-residuals-1-squared" class="section level4">
+<h4>Measurement Shocks -&gt; Standardised Residuals [1,] (Squared)</h4>
+<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="level-shocks---standard-residuals-2-squared" class="section level4">
+<h4>Level Shocks -&gt; Standard Residuals [2,] (Squared)</h4>
+<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Alhough it may be hard to judge the scaling, these are the same as far as I can tell without having access to their data.</p>
+</div>
+</div>

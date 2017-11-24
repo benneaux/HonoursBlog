@@ -3,6 +3,7 @@ title: De Jong & Penzer Notes
 author: Benjamin Moran
 date: '2017-11-24'
 slug: de-jong-penzer-notes
+draft: TRUE
 categories:
   - Modelling
 tags:
@@ -37,7 +38,7 @@ lines(a, col = "red")
 # plot(levelshocks, type = "l")
 ```
 
-```{r}
+```{r, eval = FALSE}
 library(KFAS)
 x <- ts(datasets::Nile, start = 1871, end = 1970)
 plot(x)
@@ -75,7 +76,7 @@ library(MARSS)
 dat = t(as.matrix(Nile))
 mod.nile.0 = list(Z=matrix(1), 
                   A=matrix(0),
-                  R=matrix("r"),
+                  R=matrix(15099),
                   B=matrix(1),
                   U=matrix(0),
                   Q=matrix(0),
@@ -89,26 +90,26 @@ x0=matrix("a") )
 kem.1 = MARSS(dat, model=mod.nile.1)
 mod.nile.2 = list(Z=matrix(1), 
                   A=matrix(0),
-                  R=matrix("r"),
+                  R=matrix(15099),
                   B=matrix(1),
                   U=matrix(0),
-                  Q=matrix("q"),
-                  x0=matrix("pi"))
-kem.2em = MARSS(dat, model=mod.nile.2, silent=TRUE)
+                  Q=matrix(1469),
+                  x0=matrix(1120))
+kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE)
 kem.2 = MARSS(dat, model=mod.nile.2,inits=kem.2em$par, method="BFGS")
+# kem.2 = MARSS(dat, model=mod.nile.2, method="EM")
 
 
 resids.2a = residuals(kem.2)
 ```
 ```{r}
-resids.2=residuals(kem.2)$residuals
-plot(abs(resids.2[1,]), type = "l")
-abline(h = c(1.96,-1.96), lty = 2)
+resids.2=residuals(kem.2)$std.residuals
+plot((abs(resids.2[1,]))^2, type = "l", yaxp = c(0,10,4))
+abline(h = c(2.5,5,7.5), lty = 2)
 
 resids.2=residuals(kem.2)$state.residuals
-
-plot(abs(resids.2[1,]/var(resids.2[1,])), type = "l", ylim=c(0,11))
-abline(h = c(5,0), lty = 2)
+plot(abs(c(resids.2))^2, type = "l")
+abline(h = c(2.5,5,7.5), lty = 2)
 
 # resids.2=residuals(kem.2)$residuals
 
@@ -116,5 +117,6 @@ abline(h = c(5,0), lty = 2)
 # plot(x,type = "l")
 # abline(h = c(1.96), lty = 2)
 
+test <- MARSSkfss(kem.2)
 ```
 

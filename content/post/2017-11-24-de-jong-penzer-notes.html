@@ -1,0 +1,153 @@
+---
+title: De Jong & Penzer Notes
+author: Benjamin Moran
+date: '2017-11-24'
+slug: de-jong-penzer-notes
+draft: TRUE
+categories:
+  - Modelling
+tags:
+  - Working Notes
+---
+
+
+
+<pre class="r"><code>data(&quot;Nile&quot;)
+plot(Nile)</code></pre>
+<p><img src="/post/2017-11-24-de-jong-penzer-notes_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>var.sig &lt;- 15099
+var.eta &lt;- 1469.2 
+a.0 &lt;- Nile[1]
+
+x &lt;- c(NA)
+a &lt;- c(NA)
+a[1] &lt;- a.0
+x[1] &lt;- a.0 + rnorm(1,0,sqrt(var.sig))
+for(i in 2:length(Nile)){
+  a[i] = a[i-1] + rnorm(1,0,sqrt(var.eta))
+  x[i] = a[i] + rnorm(1,0,sqrt(var.sig))
+}
+a &lt;- ts(a, start = 1871, end = 1970)
+x &lt;- ts(x, start = 1871, end = 1970)
+
+plot(x, type = &quot;l&quot;)
+lines(a, col = &quot;red&quot;)</code></pre>
+<p><img src="/post/2017-11-24-de-jong-penzer-notes_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<pre class="r"><code># levelshocks &lt;- x - a
+# plot(levelshocks, type = &quot;l&quot;)</code></pre>
+<pre class="r"><code>library(KFAS)
+x &lt;- ts(datasets::Nile, start = 1871, end = 1970)
+plot(x)
+
+intercept &lt;- 0
+model_int &lt;- SSModel(Nile ~ SSMtrend(1, Q = 1469) + SSMcustom(Z = 0, T = 1, Q = 0, a1 = intercept, P1inf = 1), H = 15099)
+
+set.seed(123)
+# simulate new observations from the &quot;fitted&quot; model
+model &lt;- SSModel(Nile ~ SSMtrend(1, Q = 1469), H = 15099)
+# signal conditional on the data i.e. samples from p(theta | y)
+# unconditional simulation is not reasonable as the model is nonstationary
+
+dist_sim &lt;- simulateSSM(model, type = &quot;disturbances&quot;, nsim = 1, filtered = FALSE)
+dist_sim
+signal_sim &lt;- simulateSSM(model, type = &quot;signals&quot;, nsim = 10)
+# and add unconditional noise term i.e samples from p(epsilon)
+epsilon_sim &lt;- simulateSSM(model, type = &quot;epsilon&quot;, nsim = 10,
+  conditional = FALSE, filtered = TRUE)
+observation_sim &lt;- signal_sim + epsilon_sim
+
+ts.plot(observation_sim[,1,], Nile, col = c(rep(2, 10), 1),
+  lty = c(rep(2, 10), 1), lwd = c(rep(1, 10), 2))
+
+# fully unconditional simulation:
+observation_sim2 &lt;- simulateSSM(model, type = &quot;observations&quot;, nsim = 10,  conditional = FALSE)
+ts.plot(observation_sim[,1,], observation_sim2[,1,], Nile,
+col = c(rep(2:3, each = 10), 1), lty = c(rep(2, 20), 1),
+lwd = c(rep(1, 20), 2))</code></pre>
+<pre class="r"><code>library(MARSS)
+dat = t(as.matrix(Nile))
+mod.nile.0 = list(Z=matrix(1), 
+                  A=matrix(0),
+                  R=matrix(15099),
+                  B=matrix(1),
+                  U=matrix(0),
+                  Q=matrix(0),
+                  x0=matrix(&quot;a&quot;))
+kem.0 = MARSS(dat, model=mod.nile.0)</code></pre>
+<pre><code>## Success! algorithm run for 15 iterations. abstol and log-log tests passed.
+## Alert: conv.test.slope.tol is 0.5.
+## Test with smaller values (&lt;0.1) to ensure convergence.
+## 
+## MARSS fit is
+## Estimation method: kem 
+## Convergence test: conv.test.slope.tol = 0.5, abstol = 0.001
+## Algorithm ran 15 (=minit) iterations and convergence was reached. 
+## Log-likelihood: -666.8986 
+## AIC: 1335.797   AICc: 1335.838   
+##  
+##      Estimate
+## x0.a      919
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
+<pre class="r"><code>mod.nile.1 = list(
+Z=matrix(1), A=matrix(0), R=matrix(&quot;r&quot;),
+B=matrix(1), U=matrix(&quot;u&quot;), Q=matrix(0),
+x0=matrix(&quot;a&quot;) )
+kem.1 = MARSS(dat, model=mod.nile.1)</code></pre>
+<pre><code>## Success! abstol and log-log tests passed at 18 iterations.
+## Alert: conv.test.slope.tol is 0.5.
+## Test with smaller values (&lt;0.1) to ensure convergence.
+## 
+## MARSS fit is
+## Estimation method: kem 
+## Convergence test: conv.test.slope.tol = 0.5, abstol = 0.001
+## Estimation converged in 18 iterations. 
+## Log-likelihood: -642.3159 
+## AIC: 1290.632   AICc: 1290.882   
+##  
+##      Estimate
+## R.r  22213.60
+## U.u     -2.69
+## x0.a  1054.94
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
+<pre class="r"><code>mod.nile.2 = list(Z=matrix(1), 
+                  A=matrix(0),
+                  R=matrix(15099),
+                  B=matrix(1),
+                  U=matrix(0),
+                  Q=matrix(1469),
+                  x0=matrix(1120))
+kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE)</code></pre>
+<pre><code>## 
+## All parameters were fixed so none estimated.
+## Expected value of the states conditioned on the model are in fit$states.
+## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
+## Log-likelihood: -637.7772</code></pre>
+<pre class="r"><code>kem.2 = MARSS(dat, model=mod.nile.2,inits=kem.2em$par, method=&quot;BFGS&quot;)</code></pre>
+<pre><code>## 
+## All parameters were fixed so none estimated.
+## Expected value of the states conditioned on the model are in fit$states.
+## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
+## Log-likelihood: -637.7772</code></pre>
+<pre class="r"><code># kem.2 = MARSS(dat, model=mod.nile.2, method=&quot;EM&quot;)
+
+
+resids.2a = residuals(kem.2)</code></pre>
+<pre class="r"><code>resids.2=residuals(kem.2)$std.residuals
+plot((abs(resids.2[1,]))^2, type = &quot;l&quot;, yaxp = c(0,10,4))
+abline(h = c(2.5,5,7.5), lty = 2)</code></pre>
+<p><img src="/post/2017-11-24-de-jong-penzer-notes_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>resids.2=residuals(kem.2)$state.residuals
+plot(abs(c(resids.2))^2, type = &quot;l&quot;)
+abline(h = c(2.5,5,7.5), lty = 2)</code></pre>
+<p><img src="/post/2017-11-24-de-jong-penzer-notes_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
+<pre class="r"><code># resids.2=residuals(kem.2)$residuals
+
+# x = abs(residuals(kem.1)$std.residuals[1,]) + abs(residuals(kem.1)$model.residuals[1,])
+# plot(x,type = &quot;l&quot;)
+# abline(h = c(1.96), lty = 2)
+
+test &lt;- MARSSkfss(kem.2)</code></pre>
