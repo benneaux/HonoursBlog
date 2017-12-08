@@ -1,5 +1,5 @@
 ---
-title: Chow’s Test
+title: Chow’s Test 
 author: Benjamin Moran
 date: '2017-11-17'
 slug: chow-s-test
@@ -11,12 +11,14 @@ tags:
 
 
 
+<div id="testing-for-changes-in-level" class="section level1">
+<h1>Testing for changes in level</h1>
 <p>One of the goals of my project is to try and identify changes in the structure of the various flutracking time series (initially the % of unvaccinated respondents reporting ILI symptoms). There are two reasons for this that inspire two separate lines of inquiry: does the structure change from year to year; and does the structure change within each year?</p>
-<p>Here we will be using Chow’s test to test for structural breaks in the flutracking data. Specifically, we’ll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the <code>strucchange</code> package in <code>R</code>. Firstly, let’s plot the %ILI Unvaccinated time series.</p>
+<p>Here we will be using Chow’s test to test for structural breaks in the flutracking data from year to year. Specifically, we’ll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the <code>strucchange</code> package in <code>R</code>. Firstly, let’s plot the %ILI Unvaccinated time series.</p>
 <div id="unvaccinated-repsondents-data" class="section level2">
 <h2>Unvaccinated Repsondents Data</h2>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotTotal-1.png" width="672" /></p>
-<p>Now I’ll use the strucchange package to test for breaks. To test for breaks we fit a basic linear model: <code>lm(ILIts ~ 1)</code> where <code>ILIts</code> is the time series plotted abouve.</p>
+<p>Now I’ll use the strucchange package to test for breaks. To test for breaks we fit a basic linear model: <code>lm(ILIts ~ 1)</code> where <code>ILIts</code> is the time series plotted above.</p>
 <pre><code>## 
 ## Call:
 ## lm(formula = ILIts ~ 1)
@@ -33,6 +35,8 @@ tags:
 ## 
 ## Residual standard error: 0.8823 on 184 degrees of freedom</code></pre>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-1.png" width="672" /></p>
+<p>Now we want to test to find significant departures from this basic model (intercept = 3.0005405). We do this by calling the <code>breakpoints</code> function with the basic <code>lm</code> as input.</p>
+<pre class="r"><code>bp &lt;- breakpoints(ILIts~ 1, h= 0.1)</code></pre>
 <pre><code>## 
 ##   Optimal (m+1)-segment partition: 
 ## 
@@ -68,9 +72,107 @@ tags:
 ## m   0      1      2      3      4      5      6      7      8      9     
 ## RSS 143.23 113.30 105.49  95.54  88.78  85.16  81.99  81.51  81.25  81.11
 ## BIC 488.11 455.18 452.40 444.51 441.38 444.13 447.55 456.91 466.76 476.87</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-2.png" width="672" /></p>
-<p>So the breakpoints function suggests that there are 4 (min. BIC).</p>
+<p>So the breakpoints function suggests that there are 4 (min. BIC). We can confirm this by plotting the results of the model fitting.</p>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/breakpoints2-1.png" width="672" /></p>
+<p>The <code>breakpoints</code> function also gives us new fitted values for the intercept as well as confidence intervals for the breakpoints. We can use these to update <a href="#fig:plotTotal"><strong>??</strong></a>.</p>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/scplot2-1.png" width="672" /></p>
-<p>Here is the same data faceted by Year.</p>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotByYear-1.png" width="672" /></p>
+<!-- Here is the same data faceted by Year. -->
+<!-- ```{r dataByYear, include=FALSE} -->
+<!-- dfresp2 <- dfresp %>% -->
+<!--   mutate(week = rep(NA,nrow(dfresp))) -->
+<!-- dfresp2$week[[1]] = 1 -->
+<!-- for(i in 2:nrow(dfresp2)){ -->
+<!--   if(dfresp2$Year[[i-1]] == dfresp2$Year[[i]]){ -->
+<!--     dfresp2$week[[i]] = dfresp2$week[[i-1]] + 1 -->
+<!--   } else { -->
+<!--     dfresp2$week[[i]] = 1 -->
+<!--   } -->
+<!-- } -->
+<!-- dfresp2$week <- factor(dfresp2$week) -->
+<!-- ``` -->
+<!-- ```{r plotByYear} -->
+<!-- ggplot() +  -->
+<!--   geom_path(data = dfresp2, -->
+<!--             aes(x = week, -->
+<!--                 y = value, -->
+<!--                 group = 1), -->
+<!--             colour = "#1f78b4", -->
+<!--             show.legend = FALSE) + -->
+<!--   theme_minimal() + -->
+<!--   facet_wrap(~Year,  -->
+<!--              ncol = 3, -->
+<!--              scales = "free_x") + -->
+<!--   # scale_x_discrete(labels = labelsbreak,  -->
+<!--                    # breaks = df2$Week_end[labbreaks]) + -->
+<!--   theme(panel.grid.major.x = element_blank(), -->
+<!--         panel.grid.minor.y = element_blank(), -->
+<!--         axis.title.y = element_blank(), -->
+<!--         axis.title.x = element_blank(), -->
+<!--         axis.text.x = element_text(colour = "darkgrey"), -->
+<!--         axis.ticks.x = element_line(colour = "grey"), -->
+<!--         legend.justification=c(1,0),  -->
+<!--         legend.position=c(0.95,0.8), -->
+<!--         legend.background = element_rect(colour = "lightgrey")) + -->
+<!--   labs( -->
+<!--     title = "% ILI reported by Unvaccinated Respondents", -->
+<!--     subtitle = "by Year and Survey Week", -->
+<!--     caption = "Data from flutracking.net" -->
+<!--   )  -->
+<!-- ``` -->
+<!-- Now I'll use the `breakpoints` function on data for each year individually. -->
+<!-- ```{r} -->
+<!-- # rm(bp) -->
+<!-- # years <- unique(dfresp2$Year) -->
+<!-- # for(i in 1:length(years)){ -->
+<!-- #   x = years[i] -->
+<!-- #   data = subset(dfresp2, Year == x) -->
+<!-- #   assign(levels(years)[i], data) -->
+<!-- # } -->
+<!-- years <- unique(dfresp2$Year) -->
+<!-- bpdata <- data.frame(Year = NA, bp1 = NA, bp2 = NA) -->
+<!-- par(mfrow = c(3,3)) -->
+<!-- for(i in 1:length(years)){ -->
+<!-- x = subset(dfresp2, Year == years[i]) -->
+<!-- data = breakpoints(x$value~1, h = 0.2) -->
+<!-- bpdata[i,1] = levels(years)[i] -->
+<!-- bpdata[i,2] = data$breakpoints[1] -->
+<!-- bpdata[i,3] = data$breakpoints[2] -->
+<!-- sumdata = summary(data)[["RSS"]][2,] -->
+<!-- breaknum = as.integer(which(sumdata==min(sumdata))) -->
+<!-- minBIC = round(min(summary(data)[["RSS"]][2,]),2) -->
+<!-- plot(data, main = paste("Year:", years[i]),sub = paste0("min(BIC): ",minBIC), xlab = paste("Number of breakpoints", breaknum)) -->
+<!-- } -->
+<!-- ``` -->
+<!-- ```{r plotByYear2} -->
+<!-- ggplot() +  -->
+<!--   geom_path(data = dfresp2, -->
+<!--             aes(x = week, -->
+<!--                 y = value, -->
+<!--                 group = 1), -->
+<!--             colour = "#1f78b4", -->
+<!--             show.legend = FALSE) + -->
+<!--   theme_minimal() + -->
+<!--   facet_wrap(~Year,  -->
+<!--              ncol = 3, -->
+<!--              scales = "free_x") + -->
+<!--   geom_vline(data = bpdata, aes(xintercept = bp1),  lty = 2, colour = "grey") + -->
+<!--   geom_vline(data = bpdata, aes(xintercept = bp2),  lty = 2, colour = "grey") + -->
+<!--   # scale_x_discrete(labels = labelsbreak,  -->
+<!--                    # breaks = df2$Week_end[labbreaks]) + -->
+<!--   theme(panel.grid.major.x = element_blank(), -->
+<!--         panel.grid.minor.y = element_blank(), -->
+<!--         axis.title.y = element_blank(), -->
+<!--         axis.title.x = element_blank(), -->
+<!--         axis.text.x = element_text(colour = "darkgrey"), -->
+<!--         axis.ticks.x = element_line(colour = "grey"), -->
+<!--         legend.justification=c(1,0),  -->
+<!--         legend.position=c(0.95,0.8), -->
+<!--         legend.background = element_rect(colour = "lightgrey")) + -->
+<!--   labs( -->
+<!--     title = "% ILI reported by Unvaccinated Respondents", -->
+<!--     subtitle = "by Year and Survey Week", -->
+<!--     caption = "Data from flutracking.net" -->
+<!--   )  -->
+<!-- ``` -->
+</div>
 </div>

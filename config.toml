@@ -1,28 +1,48 @@
 baseurl = "/"
 languageCode = "en-us"
 title = "My Honours Blog"
-theme = "hugo-theme-docdock"
-googleAnalytics = ""
-disqusShortname = ""
+theme = "blackburn"
+#googleAnalytics = ""
+#disqusShortname = ""
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$"]
 
+[indexes]
+  tag = "tags"
+  topic = "topics"
 
 [permalinks]
     post = "/:year/:month/:day/:slug/"
 
-[[menu.main]]
+[menu]
+  # Shown in the side menu.
+  [[menu.main]]
+    name = "Home"
+    pre = "<i class='fa fa-home fa-fw'></i>"
+    weight = 1
+    identifier = "home"
+    url = "/"
+  [[menu.main]]
+    name = "Posts"
+    pre = "<i class='fa fa-list fa-fw'></i>"
+    weight = 2
+    identifier = "post"
+    url = "/post/"
+  [[menu.main]]
+    name = "References"
+    pre = "<i class='fa fa-list fa-fw'></i>"
+    weight = 3
+    identifier = "references"
+    url = "/references/"
+  [[menu.main]]
     name = "About"
+    pre = "<i class='fa fa-user fa-fw'></i>"
+    weight = 4
+    identifier = "about"
     url = "/about/"
-[[menu.main]]
-    name = "GitHub"
-    url = "https://github.com/benneaux/HonoursBlog"
-#[[menu.main]]
-#    name = "Twitter"
-#    url = "https://twitter.com/rstudio"
 
 [params]
-    description = "A website to help me keep track of my Honours project work."
-    themeVariant = "gray"
+    #description = "A website to help me keep track of my Honours project work."
+    #themeVariant = "gray"
     # options for highlight.js (version, additional languages, and theme)
     highlightjsVersion = "9.11.0"
     highlightjsCDN = "//cdn.bootcss.com"

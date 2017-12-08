@@ -5,4 +5,4 @@ weight:  1
 alwaysopen: true 
 ---
 
-Boilerplate
+Some text for you, when you come Home.

@@ -49,9 +49,10 @@ kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits</code></pre>
 ## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
 ## Log-likelihood: -637.7772</code></pre>
 <pre class="r"><code>resids.2a = residuals(kem.2) # store the residuals separately</code></pre>
+<p>This is simply a recreation of an example found in the MARSS user guide. The <code>kem.2em</code> is an <code>arima(1,1,0)</code> model specified in the original paper as being the best fitting, with the values for variance of system and measurement noise being supplied.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> The <code>kem.2</code> object is the model object filtered by the fitted model; the residuals of this object will provide us with De Jong and Penzer’s <strong>state</strong> and <strong>level</strong> shocks.</p>
 </div>
-<div id="recreating-the-graphs" class="section level3">
-<h3>Recreating the Graphs</h3>
+<div id="recreating-the-graphs-state-and-level-shocks" class="section level3">
+<h3>Recreating the Graphs: State and Level shocks</h3>
 <p>Now, here are their graphs:</p>
 <div class="figure">
 <img src="/Images/DJP/DJP_Figure3.jpeg" />
@@ -67,4 +68,83 @@ kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits</code></pre>
 <p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>Alhough it may be hard to judge the scaling, these are the same as far as I can tell without having access to their data.</p>
 </div>
+</div>
+<div id="test-statistic" class="section level2">
+<h2>Test Statistic</h2>
+<pre><code>## Success! algorithm run for 15 iterations. abstol and log-log tests passed.
+## Alert: conv.test.slope.tol is 0.5.
+## Test with smaller values (&lt;0.1) to ensure convergence.
+## 
+## MARSS fit is
+## Estimation method: kem 
+## Convergence test: conv.test.slope.tol = 0.5, abstol = 0.001
+## Algorithm ran 15 (=minit) iterations and convergence was reached. 
+## Log-likelihood: -654.5157 
+## AIC: 1313.031   AICc: 1313.155   
+##  
+##      Estimate
+## R.r     28352
+## x0.a      919
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
+<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>mod.nile.1 = list(
+ Z=matrix(1), A=matrix(0), R=matrix(&quot;r&quot;),
+ B=matrix(1), U=matrix(&quot;u&quot;), Q=matrix(0),
+ x0=matrix(&quot;a&quot;) )
+
+kem.1 = MARSS(dat, model=mod.nile.1)</code></pre>
+<pre><code>## Success! abstol and log-log tests passed at 18 iterations.
+## Alert: conv.test.slope.tol is 0.5.
+## Test with smaller values (&lt;0.1) to ensure convergence.
+## 
+## MARSS fit is
+## Estimation method: kem 
+## Convergence test: conv.test.slope.tol = 0.5, abstol = 0.001
+## Estimation converged in 18 iterations. 
+## Log-likelihood: -642.3159 
+## AIC: 1290.632   AICc: 1290.882   
+##  
+##      Estimate
+## R.r  22213.60
+## U.u     -2.69
+## x0.a  1054.94
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
+<pre class="r"><code>resids.1=residuals(kem.1)$std.residuals
+
+df &lt;- data.frame(Year = seq(1871,1970,1), resids = resids.1[1,]^2)
+ggplot(data = df, aes(y = resids, x = Year)) +
+  geom_path() +
+  theme_linedraw()</code></pre>
+<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>x = vector(mode = &quot;numeric&quot;)
+for (i in 1:100){
+  x[i] = max(resids.2a$residuals[1,i],resids.2a$residuals[2,i])
+}
+
+df &lt;- data.frame(Year = seq(1871,1970,1), resids = x^2)
+ggplot(data = df, aes(y = resids, x = Year)) +
+  geom_path() +
+  theme_linedraw()</code></pre>
+<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>kf &lt;- MARSSkfas(kem.2, return.kfas.model = TRUE)
+# plot(ts(c(dat)))
+# lines(ts(c(kem.2$states)))
+# x = c(dat)-c(kem.2$states)
+# plot(ts(c(kf$xtT)))
+plot(ts(c(dat)))
+lines(ts(c(kf$xtt)))
+lines(ts(c(kf$xtT)))
+
+x = ts(c(kf$Innov)/c(kf$Sigma))
+plot(ts(c(kf$Innov)))</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Note: as I say in the comment code, MARSS can calculate the same values independently.<a href="#fnref1">↩</a></p></li>
+</ol>
 </div>
