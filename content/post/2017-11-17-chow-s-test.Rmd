@@ -7,8 +7,8 @@ categories:
   - Flutracking
 tags: 
   - Flutracking
+description: Here we will be using Chow's test to test for structural breaks in the flutracking data from year to year. Specifically, we'll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the `strucchange` package in `R`.
 ---
-
 # Testing for changes in level
 
 One of the goals of my project is to try and identify changes in the structure of the various flutracking time series (initially the % of unvaccinated respondents reporting ILI symptoms). There are two reasons for this that inspire two separate lines of inquiry: does the structure change from year to year; and does the structure change within each year?
@@ -136,8 +136,15 @@ Now I'll use the strucchange package to test for breaks. To test for breaks we f
 ```{r strucchangeByYear}
 ILIts <- ts(dfresp$value)
 lvfit <- lm(ILIts ~ 1)
-summary(lvfit)
+dt <- broom::tidy(lvfit)
+dt[-1] = round(dt[-1],3)
+DT::datatable(dt,
+              class = "compact",
+              filter="none", 
+              options = list(dom = 't'))
+```
 
+```{r scByYearPlot}
 ggplot() + 
   geom_path(data = dfresp,
             aes(x = Week_end,

@@ -7,8 +7,15 @@ categories:
   - Flutracking
 tags: 
   - Flutracking
+description: Here we will be using Chow's test to test for structural breaks in the flutracking data from year to year. Specifically, we'll be testing the % of unvaccinated respondents reporting influenza-like illness (ILI) symptoms using the `strucchange` package in `R`.
 ---
 
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/datatables-binding/datatables.js"></script>
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/dt-core/js/jquery.dataTables.min.js"></script>
 
 
 <div id="testing-for-changes-in-level" class="section level1">
@@ -19,22 +26,9 @@ tags:
 <h2>Unvaccinated Repsondents Data</h2>
 <p><img src="/post/2017-11-17-chow-s-test_files/figure-html/plotTotal-1.png" width="672" /></p>
 <p>Now I’ll use the strucchange package to test for breaks. To test for breaks we fit a basic linear model: <code>lm(ILIts ~ 1)</code> where <code>ILIts</code> is the time series plotted above.</p>
-<pre><code>## 
-## Call:
-## lm(formula = ILIts ~ 1)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -1.90054 -0.70054 -0.00054  0.59946  1.99946 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  3.00054    0.06487   46.26   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 0.8823 on 184 degrees of freedom</code></pre>
-<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/strucchangeByYear-1.png" width="672" /></p>
+<div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1"],["(Intercept)"],[3.001],[0.065],[46.257],[0]],"container":"<table class=\"compact\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>term<\/th>\n      <th>estimate<\/th>\n      <th>std.error<\/th>\n      <th>statistic<\/th>\n      <th>p.value<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[2,3,4,5]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<p><img src="/post/2017-11-17-chow-s-test_files/figure-html/scByYearPlot-1.png" width="672" /></p>
 <p>Now we want to test to find significant departures from this basic model (intercept = 3.0005405). We do this by calling the <code>breakpoints</code> function with the basic <code>lm</code> as input.</p>
 <pre class="r"><code>bp &lt;- breakpoints(ILIts~ 1, h= 0.1)</code></pre>
 <pre><code>## 

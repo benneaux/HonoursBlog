@@ -7,6 +7,7 @@ categories:
   - Modelling
 tags:
   - Flutracking
+description: Here we'll attempt to recreate some of the output found in De Jong and Penzer's paper. Firstly, the level and state shock statistics.
 ---
 
 In their paper _Diagnosing Shocks in Time Series_ De Jong and Penzer produce graphs of their $\tau^2$ statistic for the measurement and level shocks in the Nile (Cobb 1978) data (figure 3). Using the `MARSS` package in `R` I have been able to recreate the __Measurement__ and __Level__ shock statistics perfectly (I think).
