@@ -16,6 +16,3 @@ min_version = 0.15
   name = "Responsive side menu"
   homepage = "http://purecss.io/layouts/"
   repo = "https://github.com/yahoo/pure"
-
-[params]
-  SummaryLength = 10
