@@ -1,0 +1,100 @@
+---
+title: Meeting Notes
+author: Benjamin Moran
+date: '2017-05-05'
+slug: meeting-notes
+categories:
+  - Meetings
+tags:
+  - Working Notes
+description: Details of the model that Ali and I arrived at during our meeting in May 2017.
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+library(htmlTable)
+
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+
+#df <- readRDS("../../data/fludata.RDS") # work location
+df %>%
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents) %>%
+  mutate(Clinical_Staff_Unvaccinated = .$Clinical_Staff-.$Clinical_Staff_Vaccinated) -> df
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+
+```
+
+```{r data}
+Unvacc <- ts(df$ILI_Unvaccinated,start = 1, end = 115)
+Vacc <- ts(df$ILI_Vaccinated,start = 1, end = 115)
+```
+
+```{r fit}
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, 1),
+            lag2 =  stats::lag(Unvacc, 2),
+            Vacclag1 =  stats::lag(Vacc, 1), 
+            NoCons = 0)
+
+fit3 <- lm(Unvacc ~ lag1 + lag2 + Vacclag1 + NoCons, data = DF)
+broom::tidy(fit3)
+```
+
+```{r forecast}
+fcastfit3 <- predict.lm(fit3)
+plot(fcastfit3, type = "l", col = "red")
+lines(Unvacc)
+```
+
+```{r plofDiff}
+plot(ts(abs(Unvacc-c(NA,NA,fcastfit3))))
+```
+
+```{r, eval = FALSE, include = FALSE}
+VaccNew <- ts(Vacc[1:92], start = 1, end = 92)
+UnvaccNew <- ts(Unvacc[1:92], start = 1, end = 92)
+
+# UnvaccNew.acf <- acf2(UnvaccNew, length(VaccNew)-1)
+# VaccNew.acf <- acf2(VaccNew, length(VaccNew)-1)
+```
+
+<!-- Use this model to predict 2016. Condider all from 2015; then all 2015 + first week of 2016. -->
+
+<!-- #### Relative error -->
+
+```{r relerror,include = FALSE, eval = FALSE}
+n.samp <- 23
+end.ind <- length(Unvacc) - n.samp
+fit3 <- lm(zUnvacc[3:end.ind,1] ~ zUnvacc[3:end.ind,2] + zUnvacc[3:end.ind,3] + zVacc[3:end.ind,2])
+
+predicted <- tbl_df(predict(fit3, newdata = data.frame(x = n.samp), se.fit = TRUE))
+
+rel.error <- abs(Unvacc[(end.ind + 1):115]-predicted$fit)/Unvacc[(end.ind + 1):115]
+
+rel.error2 <- data.frame(data=cbind(Unvacc[(end.ind + 1):115], predicted$fit, rel.error))
+colnames(rel.error2) <- c("Actual", "Predicted", "Relative error")
+rel.error3 <- rel.error2 %>%
+  mutate(ID = 1:n()) %>%
+  select(-`Relative error`) %>%
+  gather(key = series, value = values, `Actual`, `Predicted`,-ID)
+
+ggplot(data = rel.error3, aes(x = ID, y = values, group = series, colour = series)) + 
+  geom_path() + 
+  coord_cartesian(ylim = c(0,0.1))
+# kable(rel.error2)
+```
+
+```{r plotpred, eval = FALSE,include = FALSE}
+plot.ts(Unvacc[1:end.ind], ylim=c(0, 0.06)) # Label title and axes
+lines(c((end.ind + 1):115), as.numeric(predict(fit3,newdata = data.frame(x = n.samp)), col="red"))
+#lines(c((end.ind + 1):115), as.numeric(predict(fit3, n.samp)-2*predict(fit3, n.samp)$se), col="red", lty="dashed")
+#lines(c((end.ind + 1):115), as.numeric(predict(fit.uv, n.samp)$pred+2*predict(fit.uv, n.samp)$se), col="red", lty="dashed")
+#legend("topright", legend=c("Actual", "Predicted (+/- 2SE)"), lty=1, col=1:2, bty="n")
+test <- predict(fit3, new, interval = "prediction")
+```
