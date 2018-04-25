@@ -58,88 +58,32 @@ and here are mine
 
 #### Measurement Shocks -> Standardised Residuals [1,] (Squared)
 
-```{r, echo = FALSE}
+```{r, fig.width = 10, fig.height=3, fig.align="center", echo = FALSE}
 library(ggplot2)
 
 df <- data.frame(Year = seq(1871,1970,1), resids = resids.2a$std.residuals[1,]^2)
 ggplot(data = df, aes(y = resids, x = Year)) +
   geom_path() +
-  theme_linedraw()
-
+  theme_bw() +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid=element_blank())
 ```
 
 #### Level Shocks -> Standard Residuals [2,] (Squared)
 
-```{r, echo = FALSE}
+```{r, fig.width = 10, fig.height=3, fig.align="center", echo = FALSE}
 df <- data.frame(Year = seq(1871,1970,1), resids = resids.2a$std.residuals[2,]^2)
 ggplot(data = df, aes(y = resids, x = Year)) +
   geom_path() +
-  theme_linedraw()
+  theme_bw() +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(panel.grid=element_blank())
 ```
 
 Alhough it may be hard to judge the scaling, these are the same as far as I can tell without having access to their data.
 
 ## Test Statistic
 
+Here is the maximal shock test statistic graph from DJP.
 
-```{r, echo = FALSE}
-mod.nile.0 = list(
- Z=matrix(1), A=matrix(0), R=matrix("r"),
- B=matrix(1), U=matrix(0), Q=matrix(0),
- x0=matrix("a") )
-dat = t(as.matrix(Nile))
- #Now we fit the model
- kem.0 = MARSS(dat, model=mod.nile.0)
-resids.0=residuals(kem.0)$std.residuals
-
-df <- data.frame(Year = seq(1871,1970,1), resids = resids.0[1,]^2)
-ggplot(data = df, aes(y = resids, x = Year)) +
-  geom_path() +
-  theme_linedraw()
-
-```
-
-
-```{r}
-mod.nile.1 = list(
- Z=matrix(1), A=matrix(0), R=matrix("r"),
- B=matrix(1), U=matrix("u"), Q=matrix(0),
- x0=matrix("a") )
-
-kem.1 = MARSS(dat, model=mod.nile.1)
-resids.1=residuals(kem.1)$std.residuals
-
-df <- data.frame(Year = seq(1871,1970,1), resids = resids.1[1,]^2)
-ggplot(data = df, aes(y = resids, x = Year)) +
-  geom_path() +
-  theme_linedraw()
-
-```
-
-
-```{r}
-x = vector(mode = "numeric")
-for (i in 1:100){
-  x[i] = max(resids.2a$residuals[1,i],resids.2a$residuals[2,i])
-}
-
-df <- data.frame(Year = seq(1871,1970,1), resids = x^2)
-ggplot(data = df, aes(y = resids, x = Year)) +
-  geom_path() +
-  theme_linedraw()
-```
-
-```{r, eval = FALSE}
-kf <- MARSSkfas(kem.2, return.kfas.model = TRUE)
-# plot(ts(c(dat)))
-# lines(ts(c(kem.2$states)))
-# x = c(dat)-c(kem.2$states)
-# plot(ts(c(kf$xtT)))
-plot(ts(c(dat)))
-lines(ts(c(kf$xtt)))
-lines(ts(c(kf$xtT)))
-
-x = ts(c(kf$Innov)/c(kf$Sigma))
-plot(ts(c(kf$Innov)))
-```
-
+![](/Images/DJP/DJP_Figure4.jpeg)

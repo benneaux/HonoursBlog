@@ -1,0 +1,104 @@
+---
+title: "Model test"
+author: "Benjamin Moran"
+date: "18/03/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MARSS)
+library(tidyverse)
+df <- readRDS("Data/fludata.rds")
+df_ts <- t(as.matrix(df$ILI_Unvaccinated))
+
+
+forecast::auto.arima(Nile)
+arima_ILIU = arima(Nile, c(1,1,0))
+mod = arima_ILIU$model
+
+makeARIMA(phi = mod$phi, theta = mod$theta, Delta = mod$Delta)
+model = list(Z=matrix(1), 
+             A=matrix(0),
+             R=matrix("r"),
+             B=matrix(1),
+             U=matrix(0),
+             Q=matrix("q"),
+             x0=matrix("pi"))
+```
+```{r}
+mod.nile.3 = list(B = matrix(1), U = matrix("u"), Q = matrix("q"), 
+    Z = matrix(1), A = matrix(0), R = matrix("r"), x0 = matrix("mu"), 
+    tinitx = 0)
+  dat = t(df_ts)
+  #you can use MARSS to construct a MLEobj
+  #MARSS calls MARSSinits to construct default initial values
+  MLEobj = MARSS(df_ts, control = list(maxit = 1000), form = "marxss")
+  #Compute the kf output at the params used for the inits 
+  kem.2em = MARSS(df_ts, model=mod.nile.3,
+   inits=MLEobj$par, method="kem")
+  
+  
+  marss_resids = residuals(MLEobj)
+```
+```{r}
+stdres1 <- as.ts(marss_resids$std.residuals[1,])
+stdres2 <- as.ts(marss_resids$std.residuals[2,])
+```
+
+```{r}
+plot((stdres1)^2)
+
+plot((stdres2)^2)
+```
+
+```{r}
+df_ts <- t(ts(Nile))
+
+forecast::auto.arima(Nile)
+arima_ILIU = arima(Nile, c(1,1,0))
+mod = arima_ILIU$model
+
+makeARIMA(phi = mod$phi, theta = mod$theta, Delta = mod$Delta)
+model = list(Z=matrix(1), 
+             A=matrix(0),
+             R=matrix("r"),
+             B=matrix(1),
+             U=matrix(0),
+             Q=matrix("q"),
+             x0=matrix("pi"))
+```
+```{r}
+mod.nile.3 = list(B = matrix(1), U = matrix("u"), Q = matrix("q"), 
+    Z = matrix(1), A = matrix(0), R = matrix("r"), x0 = matrix("mu"), 
+    tinitx = 0)
+  dat = t(df_ts)
+  #you can use MARSS to construct a MLEobj
+  #MARSS calls MARSSinits to construct default initial values
+  MLEobj = MARSS(df_ts, control = list(maxit = 1000), form = "marxss")
+  #Compute the kf output at the params used for the inits 
+  kem.2em = MARSS(df_ts, model=mod.nile.3,
+   inits=MLEobj$par, method="kem")
+  
+  
+  marss_resids = residuals(MLEobj)
+```
+```{r}
+stdres1 <- as.ts(marss_resids$std.residuals[1,])
+stdres2 <- as.ts(marss_resids$std.residuals[2,])
+max_res <- unlist(purrr::map2(c(marss_resids$residuals[1,])^2,c(marss_resids$residuals[2,])^2, max))
+
+```
+
+```{r}
+plot((stdres1)^2)
+
+plot((stdres2)^2)
+# plot(abs(max_res), type = "l")
+```
+```{r}
+plot(c(df_ts), type = "l")
+abline(v = which((stdres1)^2 > 2))
+```

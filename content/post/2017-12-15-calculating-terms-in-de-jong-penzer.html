@@ -1,0 +1,97 @@
+---
+title: Calculating Terms in De Jong & Penzer
+author: Benjamin Moran
+date: '2017-12-15'
+slug: calculating-terms-in-de-jong-penzer
+categories:
+  - Modelling
+tags:
+  - Working Notes
+---
+
+
+
+<div id="terms" class="section level2">
+<h2>Terms</h2>
+<p>De Jong &amp; Penzer list a number of terms necessary for calculating their statistics. Here I willdemonstrate how to find each of them using the Nile data. <span class="math display">\[
+\begin{equation}
+\def\arraystretch{1}
+\begin{array}{@{}ll@{}}
+\text{De Jong &amp; Penzer} &amp; \text{Others} \\ 
+y_t = Z_t\alpha_t + G_t\epsilon_t, ~ \epsilon_t \sim N(0, \sigma_\epsilon^2)
+&amp;z_t = Hx_t + \epsilon_t, ~ \epsilon_t \sim N(0, V_t)\\
+\alpha_{t+1} = T_t\alpha_t + H_t\eta_t, ~ \eta_t \sim N(0,\sigma_\eta^2)
+&amp; x_{t+1} = A_tx_t + \alpha_t, ~ \alpha_t \sim N(0,W_t)  \\
+\end{array}
+\end{equation}
+\]</span></p>
+<p><span class="math display">\[
+\begin{equation}
+\def\arraystretch{1}
+\begin{array}{@{}ll@{}}
+\text{Terms (DJP)} \to\text{Others} &amp; \text{Definitions} \\ 
+y_t \to z_t &amp; \text{Observations} \\
+\alpha_t \to x_t &amp; \text{States} \\
+Z_t \to H_t &amp; \text{Known, observation matrices} \\
+T_t \to A_t &amp; \text{Known, square, transition matrices} \\
+W_t &amp; \text{ covariance matrix that may be singular} \\
+\end{array}
+\end{equation}
+\]</span></p>
+<pre class="r"><code>data(Nile)
+library(dlm)
+nileBuild &lt;- function(par) {
+  dlmModPoly(1, dV = exp(par[1]), dW = exp(par[2]))
+}
+nileMLE &lt;- dlmMLE(Nile, rep(0,2), nileBuild); nileMLE$conv</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>nileMod &lt;- nileBuild(nileMLE$par)
+V(nileMod)</code></pre>
+<pre><code>##         [,1]
+## [1,] 15099.8</code></pre>
+<pre class="r"><code>W(nileMod)</code></pre>
+<pre><code>##          [,1]
+## [1,] 1468.432</code></pre>
+<pre class="r"><code>nileFilt &lt;- dlmFilter(Nile, nileMod)
+nileSmooth &lt;- dlmSmooth(nileFilt)
+plot(cbind(Nile, nileFilt$m[-1], nileSmooth$s[-1]), plot.type=&#39;s&#39;,
+     col=c(&quot;black&quot;,&quot;red&quot;,&quot;blue&quot;), ylab=&quot;Level&quot;, main=&quot;Nile river&quot;, lwd=c(1,2,2))</code></pre>
+<p><img src="/post/2017-12-15-calculating-terms-in-de-jong-penzer_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>library(KFAS)</code></pre>
+<pre><code>## Warning: package &#39;KFAS&#39; was built under R version 3.4.1</code></pre>
+<pre class="r"><code>model_Nile &lt;- SSModel(Nile ~
+  SSMtrend(1, Q = list(matrix(NA))), H = matrix(NA))
+model_Nile</code></pre>
+<pre><code>## Call:
+## SSModel(formula = Nile ~ SSMtrend(1, Q = list(matrix(NA))), H = matrix(NA))
+## 
+## State space model object of class SSModel
+## 
+## Dimensions:
+## [1] Number of time points: 100
+## [1] Number of time series: 1
+## [1] Number of disturbances: 1
+## [1] Number of states: 1
+## Names of the states:
+## [1]  level
+## Distributions of the time series:
+## [1]  gaussian
+## 
+## Object is a valid object of class SSModel.</code></pre>
+<pre class="r"><code>model_Nile &lt;- fitSSM(model_Nile, c(log(var(Nile)), log(var(Nile))),
+  method = &quot;BFGS&quot;)$model
+
+# Filtering and state smoothing
+out_Nile &lt;- KFS(model_Nile, filtering = &quot;state&quot;, smoothing = &quot;disturbance&quot;, simplify = FALSE)
+out_Nile</code></pre>
+<pre><code>## Filtered values of states and standard errors at time n+1 = 101:
+##        Estimate  Std. Error
+## level  798.37     74.17</code></pre>
+<pre class="r"><code># Confidence and prediction intervals for the expected value and the observations.
+# Note that predict uses original model object, not the output from KFS.
+conf_Nile &lt;- predict(model_Nile, interval = &quot;confidence&quot;, level = 0.9)
+pred_Nile &lt;- predict(model_Nile, interval = &quot;prediction&quot;, level = 0.9)
+dev.new()
+ts.plot(cbind(Nile, pred_Nile, conf_Nile[, -1]), col = c(1:2, 3, 3, 4, 4),
+        ylab = &quot;Predicted Annual flow&quot;, main = &quot;River Nile&quot;)</code></pre>
+</div>

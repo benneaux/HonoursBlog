@@ -1,0 +1,142 @@
+---
+title: January Questions
+author: Benjamin Moran
+date: '2018-01-27'
+slug: january-questions
+categories:
+  - Questions
+tags:
+  - Working Notes
+---
+
+```{r, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+library(htmlTable)
+
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+
+#df <- readRDS("../../data/fludata.RDS") # work location
+df %>%
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents) %>%
+  mutate(Clinical_Staff_Unvaccinated = .$Clinical_Staff-.$Clinical_Staff_Vaccinated) -> df
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+```
+
+I've reached a bit of an impasse and as a result I have a number of questions that I need to address, either with you or by myself.
+
+
+## State-Space Models for Time Series Data
+
+The methods that De Jong and Penzer use - and that the R packages I have used so far to reproduce some of their results - are reliant on representing the time-series as a state-space model in order to run the Kalman filter. Whilst De Jong and Penzer's paper does show variations of their method for ARIMA models (i.e. by representing them as a state-space model) they don't include a similar explanation for linear models like the one we arrived at last year.
+
+So, the task I've given myself is to try and join the dots. I've got myself a textbook ('Time Series Analysis by State Space Methods' by J. Durbing and S.J. Koopman - it was sighted by virtually every package and R, as well as turning up in lots of other places) that I will go through to see if I can sort out my problem.
+
+## Predictions
+
+I've been trying to use some of R's prediction functions (`base::predict()` and `forecast::forecast()`) to see how the model performs, but I'm unsure how to proceed. Each of these methods requires that the components of the model that are used to predict are supplied in a $(m \times n)$ matrix, where $m$ is the number periods that we wish to predict and $n$ is the number of predictors.
+
+Now, our model uses two different time series to predict what we're interested in: firstly, we use lags of the time series we are predicting; second, we use lags of another series. Whilst I could construct a loop that predicts each period individually before updating the data so that we always have access to the lags, we have no way of predict the other series.
+
+Thus, unless we decide on some way to predict the other series (maybe `forecast::auto.arima()`), we couldn't use it as a predictor. 
+
+```{r}
+library(dynlm)
+Unvacc <- ts(df$ILI_Unvaccinated,start = 1, end = nrow(df))
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, -1),
+            lag2 =  stats::lag(Unvacc, -2))
+
+DF <- data.frame(DF[1:185,])
+
+fit <- tslm(Unvacc ~ stats::lag(Unvacc, 1)) # Model with 2 lags
+
+n = 44
+i = 1
+for(i in 1:n){
+  r = nrow(DF)
+  newdata = data.frame(stats::lag(Unvacc, 1))
+  x = forecast(fit,newdata)
+  DF = rbind(DF, c(x,stats::lag(DF$Unvacc[r],-1),stats::lag(DF$Unvacc[r-1], -1)))
+  i = i + 1
+}
+
+plot(ts(DF$Unvacc))
+```
+
+
+### De Jong and Penzer
+
+### My Linear Model
+
+There are two issues here. Firstly, I've worked myself into a state of confusion with regards to the model we arived at 
+
+```{r}
+Unvacc <- ts(df$ILI_Unvaccinated,start = 1, end = nrow(df))
+Vacc <- ts(df$ILI_Vaccinated,start = 1, end = nrow(df))
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, -1),
+            lag2 =  stats::lag(Unvacc, -2),
+            Vacclag1 =  stats::lag(Vacc, -1))
+
+DF <- data.frame(DF[1:185,])
+
+# fit <- lm(Unvacc ~ lag1 + 0, data = DF) # Model with 1 lag
+fit2 <- lm(Unvacc ~ lag1 + lag2 + 0, data = DF) # Model with 2 lags
+# fit3 <- lm(Unvacc ~ lag1 + lag2 + Vacclag1 + 0, data = DF) # Model with 2 lags and Vacc data
+# summary(fit)
+summary(fit2)
+# summary(fit3)
+```
+
+
+```{r}
+Unvacc2 = data.frame(ID = seq(length(Unvacc)),Value = c(Unvacc))
+fit1_res <- data.frame(ID = as.integer(names(fit$fitted.values))-1, Value = c(fit$fitted.values), res = c(fit$residuals))
+fit2_res <- data.frame(ID = as.integer(names(fit2$fitted.values))-1, Value = c(fit2$fitted.values), res = c(fit2$residuals))
+fit3_res <- data.frame(ID = as.integer(names(fit3$fitted.values))-1, Value = c(fit3$fitted.values), res = c(fit3$residuals))
+ggplot(data = Unvacc2, aes(x = ID, y = Value)) + 
+  geom_line() +
+  # geom_line(data = fit1_res, aes(group = 2),col = "green") +
+  geom_line(data = fit2_res,aes(group = 3),col = "red") + 
+  geom_line(data = fit3_res,aes(group = 4),col = "blue")  
+
+ggplot() + 
+  geom_line(data = fit1_res, aes(group = 1,x = ID, y = res),col = "green") + 
+  geom_line(data = fit2_res, aes(group = 2,x = ID, y = res),col = "red") + 
+  geom_line(data = fit3_res, aes(group = 3,x = ID, y = res),col = "blue")
+```
+
+```{r}
+Unvacc <- ts(df$ILI_Unvaccinated,start = 1, end = nrow(df))
+Vacc <- ts(df$ILI_Vaccinated,start = 1, end = nrow(df))
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, -1),
+            lag2 =  stats::lag(Unvacc, -2),
+            Vacclag1 =  stats::lag(Vacc, -1))
+
+DF <- subset(DF, start  = 0, end = 161)
+fit <- lm(Unvacc ~ lag1, data = DF) # Model with 1 lag
+h = 24
+newdata <-
+  cbind(Vacclag1 = rep(mean(as.numeric(DF[,4]), na.rm = TRUE), h),
+        lag2 = rep(mean(as.numeric(DF[,3]), na.rm = TRUE), h),
+        lag1=rep(mean(as.numeric(DF[,2]), na.rm = TRUE),h)) %>%
+  rbind(c(0,0,0),.)%>%  as.data.frame()
+fcast = forecast::forecast(fit, newdata = newdata)
+fcast
+```
+
+
+The issue here is that I'm uncertain how to treat the linear model.
+
+
+## Breaks in the Time Series
+
+Interpolating missing values.
+

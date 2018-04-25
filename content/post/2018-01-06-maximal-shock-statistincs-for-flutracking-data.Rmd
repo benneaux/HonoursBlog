@@ -1,0 +1,82 @@
+---
+title: Maximal Shock Statistincs for Flutracking Data
+author: Benjamin Moran
+date: '2018-01-06'
+slug: maximal-shock-statistincs-for-flutracking-data
+categories:
+  - Flutracking
+tags:
+  - Working Notes
+---
+
+
+### What to do?
+
+I need to:
+
+* Create a lm from my data
+* Use `forecast` to auto.arima() and indentify a model for my model
+* Use the info from this to create a `MARSS` object.
+* Use this `MARSS` object to condition the next `MARSS` object.
+* The residuals of this will be the state and trend (?) maximal shock statistics.
+
+
+```{r, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+library(htmlTable)
+
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+
+#df <- readRDS("../../data/fludata.RDS") # work location
+df %>%
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents) %>%
+  mutate(Clinical_Staff_Unvaccinated = .$Clinical_Staff-.$Clinical_Staff_Vaccinated) -> df
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+```
+
+```{r}
+Unvacc <- ts(df$ILI_Unvaccinated,start = 1, end = nrow(df))
+Vacc <- ts(df$ILI_Vaccinated,start = 1, end = nrow(df))
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, 1),
+            lag2 =  stats::lag(Unvacc, 2),
+            Vacclag1 =  stats::lag(Vacc, 1))
+
+fit <- lm(Unvacc ~ lag1 + 0, data = DF) # Model with 1 lag
+#fit2 <- lm(Unvacc ~ lag1 + lag2 + 0, data = DF) # Model with 2 lags
+#fit2 <- lm(Unvacc ~ lag1 + lag2 + Vacclag1 + 0, data = DF) # Model with 2 lags and Vacc data
+broom::tidy(fit)
+summary(fit)
+```
+
+```{r}
+library(forecast)
+test <- auto.arima(fit$fitted.values)
+test2 <- auto.arima(ts(Unvacc))
+plot(ts(c(0,fit$fitted.values)), lty = 1)
+lines(ts(Unvacc), col = "red")
+#lines(ts(c(0,fit2$fitted.values)), lty = 1, col = "green")
+summary(test)
+summary(test2)
+# CV(fit)
+```
+
+```{r}
+library(MARSS)
+DF <- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, 1),
+            lag2 =  stats::lag(Unvacc, 2))
+kemfit= MARSS(t(as.data.frame.ts(DF)), method = "BFGS")
+
+kemfit.bfgs2 = MARSS(t(as.data.frame.ts(Unvacc)), method="BFGS", inits=kemfit$par)
+#resids = residuals(test)
+```
+
+
+

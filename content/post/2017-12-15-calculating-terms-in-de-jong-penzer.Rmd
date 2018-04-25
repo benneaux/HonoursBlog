@@ -1,0 +1,79 @@
+---
+title: Calculating Terms in De Jong & Penzer
+author: Benjamin Moran
+date: '2017-12-15'
+slug: calculating-terms-in-de-jong-penzer
+categories:
+  - Modelling
+tags:
+  - Working Notes
+---
+
+## Terms
+
+De Jong & Penzer list a number of terms necessary for calculating their statistics. Here I willdemonstrate how to find each of them using the Nile data.
+$$
+\begin{equation}
+\def\arraystretch{1}
+\begin{array}{@{}ll@{}}
+\text{De Jong & Penzer} & \text{Others} \\ 
+y_t = Z_t\alpha_t + G_t\epsilon_t, ~ \epsilon_t \sim N(0, \sigma_\epsilon^2)
+&z_t = Hx_t + \epsilon_t, ~ \epsilon_t \sim N(0, V_t)\\
+\alpha_{t+1} = T_t\alpha_t + H_t\eta_t, ~ \eta_t \sim N(0,\sigma_\eta^2)
+& x_{t+1} = A_tx_t + \alpha_t, ~ \alpha_t \sim N(0,W_t)  \\
+\end{array}
+\end{equation}
+$$
+
+$$
+\begin{equation}
+\def\arraystretch{1}
+\begin{array}{@{}ll@{}}
+\text{Terms (DJP)} \to\text{Others} & \text{Definitions} \\ 
+y_t \to z_t & \text{Observations} \\
+\alpha_t \to x_t & \text{States} \\
+Z_t \to H_t & \text{Known, observation matrices} \\
+T_t \to A_t & \text{Known, square, transition matrices} \\
+W_t & \text{ covariance matrix that may be singular} \\
+\end{array}
+\end{equation}
+$$
+
+
+```{r}
+data(Nile)
+library(dlm)
+nileBuild <- function(par) {
+  dlmModPoly(1, dV = exp(par[1]), dW = exp(par[2]))
+}
+nileMLE <- dlmMLE(Nile, rep(0,2), nileBuild); nileMLE$conv
+nileMod <- nileBuild(nileMLE$par)
+V(nileMod)
+W(nileMod)
+nileFilt <- dlmFilter(Nile, nileMod)
+nileSmooth <- dlmSmooth(nileFilt)
+plot(cbind(Nile, nileFilt$m[-1], nileSmooth$s[-1]), plot.type='s',
+     col=c("black","red","blue"), ylab="Level", main="Nile river", lwd=c(1,2,2))
+```
+
+```{r}
+library(KFAS)
+model_Nile <- SSModel(Nile ~
+  SSMtrend(1, Q = list(matrix(NA))), H = matrix(NA))
+model_Nile
+model_Nile <- fitSSM(model_Nile, c(log(var(Nile)), log(var(Nile))),
+  method = "BFGS")$model
+
+# Filtering and state smoothing
+out_Nile <- KFS(model_Nile, filtering = "state", smoothing = "disturbance", simplify = FALSE)
+out_Nile
+
+# Confidence and prediction intervals for the expected value and the observations.
+# Note that predict uses original model object, not the output from KFS.
+conf_Nile <- predict(model_Nile, interval = "confidence", level = 0.9)
+pred_Nile <- predict(model_Nile, interval = "prediction", level = 0.9)
+dev.new()
+ts.plot(cbind(Nile, pred_Nile, conf_Nile[, -1]), col = c(1:2, 3, 3, 4, 4),
+        ylab = "Predicted Annual flow", main = "River Nile")
+```
+
