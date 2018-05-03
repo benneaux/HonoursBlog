@@ -1,0 +1,81 @@
+---
+title: Flutracking Maximal Shock Statistic
+author: Benjamin
+date: '2018-05-02'
+slug: flutracking-maximal-shock-statistic
+categories:
+  - Flutracking
+  - Modelling
+tags: []
+---
+
+
+
+<pre class="r"><code>ilimod &lt;- SSModel(ILI ~ SSMtrend(1, Q = list(matrix(NA))),
+                  H = matrix(NA))
+
+# Now we fit the State Space model using the framework above.
+modelILI&lt;-fitSSM(inits=c(log(var(ILI)),
+                         log(var(ILI))),
+                 model = ilimod,
+                 method = &#39;BFGS&#39;)$model
+
+                 # ,
+                 # control = list(REPORT = 1,
+                 #                trace = 1))</code></pre>
+<pre class="r"><code># Check H and Q
+modelILI$H </code></pre>
+<pre><code>## , , 1
+## 
+##              [,1]
+## [1,] 4.666546e-06</code></pre>
+<pre class="r"><code>modelILI$Q </code></pre>
+<pre><code>## , , 1
+## 
+##           [,1]
+## [1,] 0.1716148</code></pre>
+<pre class="r"><code>out &lt;- KFS(modelILI, 
+           filtering = c(&quot;state&quot;),
+           smoothing = c(&quot;state&quot;,
+                         &quot;disturbance&quot;, 
+                         &quot;mean&quot;),
+           simplify = FALSE) </code></pre>
+<pre class="r"><code>y     &lt;- out$model$y    # data
+muhat &lt;- out$muhat      # level estimates
+v     &lt;- out$v          # Prediction errors
+r     &lt;- out$r[1,]      # Weighted sums of innovations
+F.mat &lt;- out$F[1,]      # Prediction error variances
+N.mat &lt;- out$N[,1,]     # Covariances of Weighted sums of innovations
+H.mat &lt;- out$model$H[1] # variance of level
+V.mu  &lt;- out$V_mu[1,,]  # variance of level estimates</code></pre>
+<pre class="r"><code>rho1 &lt;- (v^2*F.mat^(-1))
+rho2 &lt;- (r^2 * N.mat^(-1))
+rho3 &lt;- (y - muhat)/(sqrt(H.mat - V.mu))
+vals &lt;- c(0,c(rho1 + rho2[-1])[-1])</code></pre>
+<pre class="r"><code>plot(ILI, type = &quot;l&quot;, main = &quot;ILI Unvaccinated&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/Data%20Plot-1.png" width="672" /></p>
+<pre class="r"><code># PLOT 1: Figure 4 (page 799)
+plot(vals, type = &quot;l&quot;, main = &quot;Maximal Shocks&quot;)
+abline(h = qchisq(0.95,df =2), col =&quot;red&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS%20Plot-1.png" width="672" /></p>
+<pre class="r"><code>mssvals &lt;- which(vals &gt; qchisq(0.95,df =2))
+plot(ILI, type = &quot;l&quot;, main = &quot;ILI Unvaccinated&quot;)
+abline(v = mssvals+1, col = &quot;blue&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS%20Plot-2.png" width="672" /></p>
+<pre class="r"><code># PLOT 2: Figure 3a (page 799)
+plot(ts(rho2[2:length(rho2)-1]), type = &quot;l&quot;, main = &quot;Level Shocks&quot;)
+abline(h = qchisq(0.95,df =1), col =&quot;red&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS-L%20Plot-1.png" width="672" /></p>
+<pre class="r"><code>msslvals &lt;- which(rho2[2:length(rho2)-1] &gt; qchisq(0.95,df =1))
+
+plot(ILI, type = &quot;l&quot;, main = &quot;ILI Unvaccinated&quot;)
+abline(v = msslvals+1, col = &quot;blue&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS-L%20Plot-2.png" width="672" /></p>
+<pre class="r"><code># PLOT 3: Figure 3b (page 799)
+plot(ts(rho3[-1]^2), type = &quot;l&quot;, main = &quot;Measurement Shocks&quot;)
+abline(h = qchisq(0.95,df =1), col =&quot;red&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS-M%20Plot-1.png" width="672" /></p>
+<pre class="r"><code>mssmvals &lt;- which(rho3[-1]^2 &gt; qchisq(0.95,df =1))
+plot(ILI, type = &quot;l&quot;, main = &quot;ILI Unvaccinated&quot;)
+abline(v = mssmvals+1, col = &quot;blue&quot;)</code></pre>
+<p><img src="/post/2018-05-02-flutracking-maximal-shock-statistic_files/figure-html/MSS-M%20Plot-2.png" width="672" /></p>

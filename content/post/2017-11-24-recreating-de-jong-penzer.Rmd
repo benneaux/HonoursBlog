@@ -33,10 +33,10 @@ dat = t(as.matrix(Nile))
 
 mod.nile.2 = list(Z=matrix(1), 
                   A=matrix(0),
-                  R=matrix(15099),
+                  R=matrix("r"),
                   B=matrix(1),
                   U=matrix(0),
-                  Q=matrix(1469),
+                  Q=matrix("q"),
                   x0=matrix(1120))
 kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits
 
@@ -49,7 +49,7 @@ This is simply a recreation of an example found in the MARSS user guide. The `ke
 
 
 ### Recreating the Graphs: State and Level shocks
-
+Ñ
 Now, here are their graphs:
 
 ![](/Images/DJP/DJP_Figure3.jpeg)

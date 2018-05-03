@@ -1,0 +1,54 @@
+---
+title: Maximal Shock Statistincs for Flutracking Data
+author: Benjamin Moran
+date: '2018-01-06'
+slug: maximal-shock-statistincs-for-flutracking-data
+categories:
+  - Flutracking
+tags:
+  - Working Notes
+draft: TRUE
+---
+
+
+
+<div id="what-to-do" class="section level3">
+<h3>What to do?</h3>
+<p>I need to:</p>
+<ul>
+<li>Create a lm from my data</li>
+<li>Use <code>forecast</code> to auto.arima() and indentify a model for my model</li>
+<li>Use the info from this to create a <code>MARSS</code> object.</li>
+<li>Use this <code>MARSS</code> object to condition the next <code>MARSS</code> object.</li>
+<li>The residuals of this will be the state and trend (?) maximal shock statistics.</li>
+</ul>
+<pre class="r"><code>Unvacc &lt;- ts(df$ILI_Unvaccinated,start = 1, end = nrow(df))
+Vacc &lt;- ts(df$ILI_Vaccinated,start = 1, end = nrow(df))
+DF &lt;- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, 1),
+            lag2 =  stats::lag(Unvacc, 2),
+            Vacclag1 =  stats::lag(Vacc, 1))
+
+fit &lt;- lm(Unvacc ~ lag1 + 0, data = DF) # Model with 1 lag
+#fit2 &lt;- lm(Unvacc ~ lag1 + lag2 + 0, data = DF) # Model with 2 lags
+#fit2 &lt;- lm(Unvacc ~ lag1 + lag2 + Vacclag1 + 0, data = DF) # Model with 2 lags and Vacc data
+broom::tidy(fit)
+summary(fit)</code></pre>
+<pre class="r"><code>library(forecast)
+test &lt;- auto.arima(fit$fitted.values)
+test2 &lt;- auto.arima(ts(Unvacc))
+plot(ts(c(0,fit$fitted.values)), lty = 1)
+lines(ts(Unvacc), col = &quot;red&quot;)
+#lines(ts(c(0,fit2$fitted.values)), lty = 1, col = &quot;green&quot;)
+summary(test)
+summary(test2)
+# CV(fit)</code></pre>
+<pre class="r"><code>library(MARSS)
+DF &lt;- cbind(Unvacc = Unvacc,
+            lag1 =  stats::lag(Unvacc, 1),
+            lag2 =  stats::lag(Unvacc, 2))
+kemfit= MARSS(t(as.data.frame.ts(DF)), method = &quot;BFGS&quot;)
+
+kemfit.bfgs2 = MARSS(t(as.data.frame.ts(Unvacc)), method=&quot;BFGS&quot;, inits=kemfit$par)
+#resids = residuals(test)</code></pre>
+</div>

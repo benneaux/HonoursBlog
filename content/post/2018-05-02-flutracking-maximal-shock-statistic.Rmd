@@ -1,0 +1,113 @@
+---
+title: Flutracking Maximal Shock Statistic
+author: Benjamin
+date: '2018-05-02'
+slug: flutracking-maximal-shock-statistic
+categories:
+  - Flutracking
+  - Modelling
+tags: []
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+library(htmlTable)
+library(KFAS)
+
+df <- readRDS("~/R/HonoursBlog/data/fludata.RDS")
+
+#df <- readRDS("../../data/fludata.RDS") # work location
+df %>%
+  filter(year(as.Date(.$Week_end)) >= 2013) %>% 
+  mutate(Year = factor(year(as.Date(.$Week_end)))) %>%
+  mutate(Unvaccinated = .$Responses-.$Vaccinated_Respondents) %>%
+  mutate(Clinical_Staff_Unvaccinated = .$Clinical_Staff-.$Clinical_Staff_Vaccinated) -> df
+
+df2 <- melt(df,id = c("Week_end","fileref","Year"))
+ILI = df$ILI_Unvaccinated
+```
+
+```{r}
+ilimod <- SSModel(ILI ~ SSMtrend(1, Q = list(matrix(NA))),
+                  H = matrix(NA))
+
+# Now we fit the State Space model using the framework above.
+modelILI<-fitSSM(inits=c(log(var(ILI)),
+                         log(var(ILI))),
+                 model = ilimod,
+                 method = 'BFGS')$model
+
+                 # ,
+                 # control = list(REPORT = 1,
+                 #                trace = 1))
+```
+
+```{r}
+# Check H and Q
+modelILI$H 
+modelILI$Q 
+out <- KFS(modelILI, 
+           filtering = c("state"),
+           smoothing = c("state",
+                         "disturbance", 
+                         "mean"),
+           simplify = FALSE) 
+```
+
+```{r components}
+y     <- out$model$y    # data
+muhat <- out$muhat      # level estimates
+v     <- out$v          # Prediction errors
+r     <- out$r[1,]      # Weighted sums of innovations
+F.mat <- out$F[1,]      # Prediction error variances
+N.mat <- out$N[,1,]     # Covariances of Weighted sums of innovations
+H.mat <- out$model$H[1] # variance of level
+V.mu  <- out$V_mu[1,,]  # variance of level estimates
+```
+
+```{r, shockstats}
+rho1 <- (v^2*F.mat^(-1))
+rho2 <- (r^2 * N.mat^(-1))
+rho3 <- (y - muhat)/(sqrt(H.mat - V.mu))
+vals <- c(0,c(rho1 + rho2[-1])[-1])
+```
+
+```{r Data Plot}
+plot(ILI, type = "l", main = "ILI Unvaccinated")
+```
+
+
+```{r MSS Plot}
+# PLOT 1: Figure 4 (page 799)
+plot(vals, type = "l", main = "Maximal Shocks")
+abline(h = qchisq(0.95,df =2), col ="red")
+
+mssvals <- which(vals > qchisq(0.95,df =2))
+plot(ILI, type = "l", main = "ILI Unvaccinated")
+abline(v = mssvals+1, col = "blue")
+```
+
+```{r MSS-L Plot}
+# PLOT 2: Figure 3a (page 799)
+plot(ts(rho2[2:length(rho2)-1]), type = "l", main = "Level Shocks")
+abline(h = qchisq(0.95,df =1), col ="red")
+
+msslvals <- which(rho2[2:length(rho2)-1] > qchisq(0.95,df =1))
+
+plot(ILI, type = "l", main = "ILI Unvaccinated")
+abline(v = msslvals+1, col = "blue")
+```
+
+```{r MSS-M Plot}
+# PLOT 3: Figure 3b (page 799)
+plot(ts(rho3[-1]^2), type = "l", main = "Measurement Shocks")
+abline(h = qchisq(0.95,df =1), col ="red")
+mssmvals <- which(rho3[-1]^2 > qchisq(0.95,df =1))
+plot(ILI, type = "l", main = "ILI Unvaccinated")
+abline(v = mssmvals+1, col = "blue")
+```
+

@@ -7,6 +7,7 @@ categories:
   - Flutracking
 tags:
   - Working Notes
+draft: TRUE
 ---
 
 
@@ -23,7 +24,7 @@ I need to:
 
 ```{r, include=FALSE}
 library(knitr)
-opts_chunk$set(echo = FALSE)
+opts_chunk$set(eval = FALSE)
 library(tidyverse)
 library(lubridate)
 library(reshape2)

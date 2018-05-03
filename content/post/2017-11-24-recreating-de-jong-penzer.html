@@ -32,29 +32,51 @@ dat = t(as.matrix(Nile))
 
 mod.nile.2 = list(Z=matrix(1), 
                   A=matrix(0),
-                  R=matrix(15099),
+                  R=matrix(&quot;r&quot;),
                   B=matrix(1),
                   U=matrix(0),
-                  Q=matrix(1469),
+                  Q=matrix(&quot;q&quot;),
                   x0=matrix(1120))
 kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits</code></pre>
-<pre><code>## 
-## All parameters were fixed so none estimated.
-## Expected value of the states conditioned on the model are in fit$states.
-## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
-## Log-likelihood: -637.7772</code></pre>
+<pre><code>## Success! abstol and log-log tests passed at 73 iterations.
+## Alert: conv.test.slope.tol is 0.5.
+## Test with smaller values (&lt;0.1) to ensure convergence.
+## 
+## MARSS fit is
+## Estimation method: kem 
+## Convergence test: conv.test.slope.tol = 0.5, abstol = 0.001
+## Estimation converged in 73 iterations. 
+## Log-likelihood: -637.7717 
+## AIC: 1279.543   AICc: 1279.667   
+##  
+##     Estimate
+## R.r    15044
+## Q.q     1438
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
 <pre class="r"><code>kem.2 = MARSS(dat, model=mod.nile.2,inits=kem.2em$par, method=&quot;BFGS&quot;) # model</code></pre>
-<pre><code>## 
-## All parameters were fixed so none estimated.
-## Expected value of the states conditioned on the model are in fit$states.
-## Expected value of the missing data (if any) conditioned on the model are in fit$ytT.
-## Log-likelihood: -637.7772</code></pre>
+<pre><code>## Success! Converged in 15 iterations.
+## Function MARSSkfas used for likelihood calculation.
+## 
+## MARSS fit is
+## Estimation method: BFGS 
+## Estimation converged in 15 iterations. 
+## Log-likelihood: -637.7534 
+## AIC: 1279.507   AICc: 1279.631   
+##  
+##     Estimate
+## R.r    15367
+## Q.q     1231
+## 
+## Standard errors have not been calculated. 
+## Use MARSSparamCIs to compute CIs and bias estimates.</code></pre>
 <pre class="r"><code>resids.2a = residuals(kem.2) # store the residuals separately</code></pre>
 <p>This is simply a recreation of an example found in the MARSS user guide. The <code>kem.2em</code> is an <code>arima(1,1,0)</code> model specified in the original paper as being the best fitting, with the values for variance of system and measurement noise being supplied.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> The <code>kem.2</code> object is the model object filtered by the fitted model; the residuals of this object will provide us with De Jong and Penzer’s <strong>state</strong> and <strong>level</strong> shocks.</p>
 </div>
 <div id="recreating-the-graphs-state-and-level-shocks" class="section level3">
 <h3>Recreating the Graphs: State and Level shocks</h3>
-<p>Now, here are their graphs:</p>
+<p>Ñ Now, here are their graphs:</p>
 <div class="figure">
 <img src="/Images/DJP/DJP_Figure3.jpeg" />
 
@@ -67,10 +89,6 @@ kem.2em = MARSS(dat, model=mod.nile.2, silent=FALSE) # inits</code></pre>
 <div id="level-shocks---standard-residuals-2-squared" class="section level4">
 <h4>Level Shocks -&gt; Standard Residuals [2,] (Squared)</h4>
 <p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-3-1.png" width="960" style="display: block; margin: auto;" /></p>
-</div>
-<div id="together" class="section level4">
-<h4>Together</h4>
-<p><img src="/post/2017-11-24-recreating-de-jong-penzer_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <p>Alhough it may be hard to judge the scaling, these are the same as far as I can tell without having access to their data.</p>
 </div>
 </div>
